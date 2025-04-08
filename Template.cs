@@ -1,4 +1,5 @@
-﻿using Il2CppScheduleOne.Dialogue;
+﻿using Il2CppFluffyUnderware.DevTools.Extensions;
+using Il2CppScheduleOne.Dialogue;
 using Il2CppScheduleOne.Map;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
@@ -74,11 +75,16 @@ namespace DeliverySaver
             Action callback = () => DoSomeStuff(shop);
             entryGo.GetComponent<Button>().onClick.AddListener(callback);
 
-            Transform titleGo = entryGo.transform.Find("Title");
+            Transform titleGo = entryGo.transform.Find("Head/Title");
             titleGo.GetComponent<Text>().text = title;
 
             Transform shopGo = entryGo.transform.Find("ShopName");
             shopGo.GetComponent<Text>().text = shop.name;
+
+            GameObject closeButton = entryGo.transform.Find("Head/CloseButton").gameObject;
+
+            Action close = () => { GameObject.Destroy(entryGo); };
+            closeButton.GetComponent<Button>().onClick.AddListener(close);
 
             return entryGo.transform.Find("Content");
         }
