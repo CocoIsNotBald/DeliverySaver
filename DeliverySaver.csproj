@@ -474,6 +474,10 @@
 	<ItemGroup>
 	  <Folder Include="Scripts\" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
 	
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Schedule I\Mods&quot;" />

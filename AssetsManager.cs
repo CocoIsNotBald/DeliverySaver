@@ -18,7 +18,7 @@ namespace DeliverySaver
         public Asset(string name, params string[] path)
         {
             this.name = name;
-            this.path = Path.Combine(ModConfig.ModRootFile, "assets");
+            this.path = ModConfig.AssetPath;
 
             foreach (string p in path)
             {

@@ -9,8 +9,14 @@ namespace DeliverySaver
 {
     internal static class ModConfig
     {
-        public static string ModRootFile {
+        public static string ModRootFile 
+        {
             get => Path.Combine(Application.dataPath, "..", "Mods", "DeliverySaver");
+        }
+
+        public static string AssetPath
+        {
+            get => Path.Combine(ModRootFile, "assets");
         }
 
         public static string GetFilePath(string fileName)
