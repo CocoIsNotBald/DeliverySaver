@@ -13,8 +13,12 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
-
 	<ItemGroup>
+		<EmbeddedResource Include="assets/ui/component" />
+		<EmbeddedResource Include="assets/ui/entry" />
+		<EmbeddedResource Include="assets/ui/template" />
+		<EmbeddedResource Include="assets/ui/templatename" />	
+		<EmbeddedResource Include="assets/ui/savebutton" />
 		<Reference Include="Assembly-CSharp-firstpass">
 			<HintPath>C:\Program Files (x86)\Steam\steamapps\common\Schedule I\MelonLoader\Il2CppAssemblies\Assembly-CSharp-firstpass.dll</HintPath>
 		</Reference>

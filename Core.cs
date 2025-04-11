@@ -1,8 +1,10 @@
 ﻿using Il2CppFluffyUnderware.Curvy.Generator;
 using Il2CppScheduleOne;
+using Il2CppScheduleOne.DevUtilities;
 using Il2CppScheduleOne.Map;
 using Il2CppScheduleOne.Money;
 using Il2CppScheduleOne.Persistence.Datas;
+using Il2CppScheduleOne.PlayerScripts;
 using Il2CppScheduleOne.UI.Phone;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using Il2CppToolBuddy.ThirdParty.VectorGraphics;
@@ -17,6 +19,7 @@ using UnityEngine.UI;
 [assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.0", "Coco", null)]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
+// Phone dimensions 1200x800
 class SomeMono : MonoBehaviour
 {
     public void Start()
@@ -29,7 +32,6 @@ namespace DeliverySaver
 {
     public class Core : MelonMod
     {
-        private string _modRootFile = Path.Combine(Application.dataPath, "..", "Mods", "DeliverySaver");
         private string _scene;
         private bool _loaded = false;
         private bool _loadTemplate = false;
@@ -39,25 +41,27 @@ namespace DeliverySaver
 
         public override void OnInitializeMelon()
         {
-            if (!Directory.Exists(_modRootFile))
+            if (!Directory.Exists(ModConfig.ModRootFile))
             {
-                Directory.CreateDirectory(_modRootFile);
+                Directory.CreateDirectory(ModConfig.ModRootFile);
             }
+
+            AssetsManager.Instance.resourcesPrefix = "DeliverySaver.assets.";
 
             TemplateManager.Instance.Init();
 
-            AssetsManager.Instance.LoadAsset("SaveButton", "ui", "saveButton");
-            AssetsManager.Instance.LoadAsset("TemplateName", "ui", "templatename");
+            AssetsManager.Instance.LoadResources("SaveButton", "ui.savebutton");
+            AssetsManager.Instance.LoadResources("TemplateName", "ui.templatename");
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             _scene = sceneName;
-        }
 
-        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
-        {
-            
+            if(_scene != "Main")
+            {
+                _loaded = false;
+            }
         }
 
         public override void OnApplicationQuit()
@@ -81,16 +85,13 @@ namespace DeliverySaver
                     _loadTemplate = false;
                 }
 
-                if (DeliveryApp.Instance && !_loaded)
+                if (DeliveryApp.Instance && GameManager.Instance && !_loaded)
                 {
                     InitTemplateName();
                     AddAppSaveButton(DeliveryApp.Instance);
                     _loaded = true;
                     _loadTemplate = true;
                 }
-            } else
-            {
-                _loaded = false;
             }
         }
 
@@ -109,7 +110,14 @@ namespace DeliverySaver
 
         private void AddTemplatePanel(DeliveryApp app)
         {
-            templateInstance = TemplateManager.Instance.Load("template.json");
+            if(TemplateManager.Instance.HasGame())
+            {
+                templateInstance = TemplateManager.Instance.GetCurrentTemplateGame();
+            }
+            else
+            {
+                templateInstance = TemplateManager.Instance.Load(TemplateManager.Instance.GetTemplateForSave());
+            }
 
             templateInstance.gameObject.transform.SetParent(app.appContainer.transform, false);
             templateInstance.gameObject.transform.localPosition = new Vector3(393, -32, 0);
@@ -119,11 +127,8 @@ namespace DeliverySaver
         {
             foreach (DeliveryShop deliveryShop in app.deliveryShops)
             {
-                LoggerInstance.Msg($"Loading button for delivery shop {deliveryShop.name}");
-
                 Transform panel = GetPanel(deliveryShop);
 
-                LoggerInstance.Msg(panel.ToString());
                 if (panel)
                 {
                     GameObject go = AssetsManager.Instance.Instantiate("SaveButton");
@@ -138,8 +143,6 @@ namespace DeliverySaver
                         OnNameValidated();
                     };
                     saveButton.onClick.AddListener(callback);
-
-                    LoggerInstance.Msg($"Save button created for {deliveryShop.name}");
                 }
                 else
                 {
@@ -166,7 +169,7 @@ namespace DeliverySaver
 
         private void OnSaveClick(string value)
         {
-            if (TemplateManager.Instance.IsEntryRegister(value)) return;
+            if (TemplateManager.Instance.GetTemplateGameData().IsEntryRegister(value)) return;
 
             Entry entry = templateInstance.AddEntry(GetTemplateNameInput().text, _deliveryShop);
 
@@ -178,7 +181,7 @@ namespace DeliverySaver
                 }
             }
 
-            TemplateManager.Instance.RegisterEntry(entry);
+            TemplateManager.Instance.GetTemplateGameData().RegisterEntry(entry);
 
             templateName.SetActive(false);
             GameInput.Instance.PlayerInput.ActivateInput();

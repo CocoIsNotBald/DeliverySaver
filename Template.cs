@@ -1,6 +1,7 @@
 ﻿using Il2CppFluffyUnderware.DevTools.Extensions;
 using Il2CppNewtonsoft.Json;
 using Il2CppNewtonsoft.Json.Utilities;
+using Il2CppScheduleOne.DevUtilities;
 using Il2CppScheduleOne.Dialogue;
 using Il2CppScheduleOne.Map;
 using Il2CppScheduleOne.Money;
@@ -25,7 +26,7 @@ using UnityEngine.UI;
 
 namespace DeliverySaver
 {
-    internal class ComponentData
+    public class ComponentData
     {
         public string name;
         public string quantity;
@@ -43,7 +44,7 @@ namespace DeliverySaver
             quantity = component.quantity.ToString();
         }
     }
-    internal class EntryData
+    public class EntryData
     {
         public string name;
         public string shopName;
@@ -69,7 +70,7 @@ namespace DeliverySaver
         }
     }
 
-    internal class Entry
+    public class Entry
     {
         public List<Component> components = new List<Component>();
         public string name { get; }
@@ -126,7 +127,7 @@ namespace DeliverySaver
         private void Close()
         {
             GameObject.Destroy(root);
-            TemplateManager.Instance.RemoveEntry(this);
+            TemplateManager.Instance.GetTemplateGameData().RemoveEntry(this);
         }
 
         private float totalCost { get => components.Sum(c => c.price * c.MultipliedQuantity()) + 200; }
@@ -154,7 +155,7 @@ namespace DeliverySaver
             }
 
             _price.text = totalCostLabel;
-            TemplateManager.Instance.UpdateEntry(this);
+            TemplateManager.Instance.GetTemplateGameData().UpdateEntry(this);
 
             CheckInsufficientBalance();
         }
@@ -219,7 +220,7 @@ namespace DeliverySaver
         }
     }
 
-    internal class Component
+    public class Component
     {
         public ListingEntry entry;
         public Text content;
@@ -258,10 +259,11 @@ namespace DeliverySaver
         public void UpdateContent()
         {
             content.text = $"{MultipliedQuantity().ToString()}x {name}";
+            
         }
     }
 
-    internal class Template
+    public class Template
     {
         public GameObject gameObject { get; private set; }
         private Asset _entry;
@@ -287,6 +289,11 @@ namespace DeliverySaver
             GameObject scrollGo = gameObject.transform.Find("Mask/Content/Scroll").gameObject;
 
             _entry = AssetsManager.Instance.GetAsset("Entry");
+
+            if(entries == null)
+            {
+                return;
+            }
 
             foreach (EntryData entry in entries)
             {
@@ -340,9 +347,63 @@ namespace DeliverySaver
         }
     }
 
-    internal class TemplateManager
+    public class TemplateGameData
     {
-        private Dictionary<string, EntryData> entryData = new Dictionary<string, EntryData>();
+        private Dictionary<string, EntryData> _entryData = new Dictionary<string, EntryData>();
+        public string gameName { get; private set; }
+        public string gameSeed { get; private set; }
+        public string filename;
+        public string gameFullName { get => $"{gameName}_{gameSeed}"; }
+
+        public Dictionary<string, EntryData> entryData { get => _entryData; }
+
+        public TemplateGameData(List<EntryData> entryData = default)
+        {
+            gameName = GameManager.Instance.OrganisationName;
+            gameSeed = GameManager.Instance.seed.ToString();
+
+            filename = $"template_{gameFullName}.json";
+
+            if (entryData == null)
+            {
+                return;
+            }
+
+            foreach (EntryData data in entryData)
+            {
+                _entryData.Add(data.name, data);
+            }
+        }
+
+        public bool IsEntryRegister(string name)
+        {
+            return _entryData.ContainsKey(name);
+        }
+
+        public bool IsEntryRegister(Entry entry)
+        {
+            return _entryData.ContainsKey(entry.name);
+        }
+
+        public void RegisterEntry(Entry entry)
+        {
+            _entryData.Add(entry.name, new EntryData(entry));
+        }
+
+        public void UpdateEntry(Entry entry)
+        {
+            _entryData[entry.name] = new EntryData(entry);
+        }
+
+        public void RemoveEntry(Entry entry)
+        {
+            _entryData.Remove(entry.name);
+        }
+    }
+
+    public class TemplateManager
+    {
+        public List<TemplateGameData> templates = new List<TemplateGameData>();
         private static TemplateManager _instance;
         public static TemplateManager Instance
         {
@@ -355,70 +416,86 @@ namespace DeliverySaver
                 return _instance;
             }
         }
-        
-        public bool IsEntryRegister(string name)
+
+        private string GetGameFullName()
         {
-            return entryData.ContainsKey(name);
+            string gameName = GameManager.Instance.OrganisationName;
+            string gameSeed = GameManager.Instance.seed.ToString();
+            string gameFullName = $"{gameName}_{gameSeed}";
+            return gameFullName;
         }
 
-        public bool IsEntryRegister(Entry entry)
+        public bool HasGame()
         {
-            return entryData.ContainsKey(entry.name);
+            return templates.FirstOrDefault((t) => t.gameFullName == GetGameFullName()) != null;
         }
 
-        public void RegisterEntry(Entry entry)
+        public TemplateGameData GetTemplateGameData()
         {
-            entryData.Add(entry.name, new EntryData(entry));
+            TemplateGameData gameData = templates.FirstOrDefault(t => t.filename == GetTemplateForSave());
+
+            if (gameData == null)
+            {
+                gameData = new TemplateGameData();
+                templates.Add(gameData);
+            }
+
+            return gameData;
         }
 
-        public void UpdateEntry(Entry entry)
+        public string GetTemplateForSave()
         {
-            entryData[entry.name] = new EntryData(entry);
-        }
-
-        public void RemoveEntry(Entry entry)
-        {
-            entryData.Remove(entry.name);
+            return $"template_{GameManager.Instance.OrganisationName}_{GameManager.Instance.seed}.json";
         }
 
         public void Save()
         {
-            string path = Path.Combine(ModConfig.ModRootFile, "templates");
-            Directory.CreateDirectory(path);
-            List<EntryData> entries = entryData.Values.ToList();
+            foreach (TemplateGameData template in templates)
+            {
+                SaveTemplate(template);
+            }
+        }
 
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(entries);
-            File.WriteAllText(Path.Combine(path, "template.json"), json);
+        private void SaveTemplate(TemplateGameData template)
+        {
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(template.entryData.Values.ToList());
+            string path = Path.Combine(ModConfig.ModRootFile, template.filename);
+
+            File.WriteAllText(Path.Combine(ModConfig.ModRootFile, template.filename), json);
+        }
+
+        public Template GetCurrentTemplateGame()
+        {
+            TemplateGameData gameData = templates.FirstOrDefault(t => t.gameFullName == GetGameFullName());
+            if (gameData == null)
+            {
+                return null;
+            }
+            return Instantiate(gameData.entryData.Values.ToList());
         }
 
         public Template Load(string file)
         {
-            string path = Path.Combine(ModConfig.ModRootFile, "templates", file);
-            string data = File.ReadAllText(path);
+            string path = Path.Combine(ModConfig.ModRootFile, file);
 
-            if(!File.Exists(path))
+            if (!File.Exists(path))
             {
-                Melon<Core>.Logger.Warning($"Cannot find template file {path}");
                 return Instantiate();
             }
 
+            string data = File.ReadAllText(path);
+
             List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(data);
-            entryData.Clear();
+            templates.Add(new TemplateGameData(entries));
 
-            foreach (EntryData entry in entries)
-            {
-                entryData.Add(entry.name, entry);
-            }
-
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(entryData);
             return Instantiate(entries);
         }
 
         public void Init()
         {
-            AssetsManager.Instance.LoadAsset("Template", "ui", "template");
-            AssetsManager.Instance.LoadAsset("Entry", "ui", "entry");
-            AssetsManager.Instance.LoadAsset("Component", "ui", "component");
+            AssetsManager.Instance.LoadResources("Template", "ui.template");
+            AssetsManager.Instance.LoadResources("Entry", "ui.entry");
+            AssetsManager.Instance.LoadResources("Component", "ui.component");
         }
         private Template Instantiate(List<EntryData> entries = default)
         {
