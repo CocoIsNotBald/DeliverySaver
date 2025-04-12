@@ -12,7 +12,8 @@
 - Added close button to entry (commit: 79c38f65290c476f1c0b7a3a91065c747e1887ea)
 - Added delivery order template
 ## Fixed
-- Fixed unordered dictionary from json when loading template (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
+- Fixed entry name not updating in json (Commit: 556d781a40b49975d9389e284ac0700094c0b3e3)
+- Fixed unordered dictionary from json when loading template (Commit: 556d781a40b49975d9389e284ac0700094c0b3e3)
 - Fixed stack limit calculation problem (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
 ## Know issues
 - Notification animation can is a bit buggy. Sometimes animation is flicking when nearing the end
