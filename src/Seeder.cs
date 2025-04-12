@@ -28,7 +28,6 @@ namespace DeliverySaver
 
         public string Seed(object obj)
         {
-            Melon<Core>.Logger.Msg($"Signature: {signature}");
             string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
             byte[] plainTextBytes = Encoding.UTF8.GetBytes(signature + json);
 
@@ -44,8 +43,6 @@ namespace DeliverySaver
         {
             byte[] base64encoded = Convert.FromBase64String(encoded);
             string content = Encoding.UTF8.GetString(base64encoded);
-
-            Melon<Core>.Logger.Msg($"Decoded: {content}");
 
             if (!content.StartsWith(signature))
             {
