@@ -107,7 +107,7 @@ namespace DeliverySaver
 
         public Entry(string title, DeliveryShop shop, GameObject root, Action rebuilder)
         {
-            this.name = title;
+            name = title;
             this.root = root;
 
             Action callback = () => ApplyTemplate(shop);
@@ -144,7 +144,7 @@ namespace DeliverySaver
             InputField multiplierIF = multiplierInput.GetComponent<InputField>();
             multiplierIF.text = multiply.ToString();
 
-            Action<string> multiplierAction = (string value) => HandleMulitplicationInput(value);
+            Action<string> multiplierAction = (value) => HandleMulitplicationInput(value);
             multiplierIF.onSubmit.AddListener(multiplierAction);
             _multiplierIF = multiplierIF;
 
@@ -169,7 +169,7 @@ namespace DeliverySaver
 
         private Func<string, bool> ChangeTitle(Text titleText)
         {
-            Func<string, bool> action = (string value) => 
+            Func<string, bool> action = (value) => 
             {
                 titleText.text = value;
                 name = value;
@@ -190,7 +190,7 @@ namespace DeliverySaver
 
         private void Close()
         {
-            GameObject.Destroy(root);
+            UnityEngine.Object.Destroy(root);
             TemplateManager.Instance.GetTemplateGameData().RemoveEntry(this);
         }
 
@@ -302,8 +302,8 @@ namespace DeliverySaver
         {
             this.entry = entry;
             this.content = content;
-            this._name = name;
-            this._parent = parent;
+            _name = name;
+            _parent = parent;
 
             _price = int.Parse(price.Replace("$",""));
             _baseQuantity = int.Parse(quantity);

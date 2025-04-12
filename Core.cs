@@ -1,19 +1,8 @@
-﻿using Il2CppFluffyUnderware.Curvy.Generator;
-using Il2CppScheduleOne;
-using Il2CppScheduleOne.DevUtilities;
-using Il2CppScheduleOne.Map;
-using Il2CppScheduleOne.Money;
-using Il2CppScheduleOne.Persistence.Datas;
-using Il2CppScheduleOne.PlayerScripts;
-using Il2CppScheduleOne.UI.Phone;
+﻿using Il2CppScheduleOne.DevUtilities;
 using Il2CppScheduleOne.UI.Phone.Delivery;
-using Il2CppToolBuddy.ThirdParty.VectorGraphics;
 using MelonLoader;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 [assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.0", "Coco", null)]

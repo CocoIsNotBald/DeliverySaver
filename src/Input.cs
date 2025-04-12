@@ -15,9 +15,9 @@ namespace DeliverySaver
         private GameObject _parent;
         private InputField _inputField;
 
-        public Action<string> OnEndEdit = (string _) => { };
-        public Action<string> OnValueChanged = (string _) => { };
-        public Func<string, bool> OnSubmit = (string _) => true;
+        public Action<string> OnEndEdit = (_) => { };
+        public Action<string> OnValueChanged = (_) => { };
+        public Func<string, bool> OnSubmit = (_) => true;
 
         public InputField InputField => _inputField;
 
@@ -25,7 +25,7 @@ namespace DeliverySaver
         {
             _inputField = field;
 
-            Action<string> onEndEdit = (string value) =>
+            Action<string> onEndEdit = (value) =>
             {
                 OnEndEdit(value);
 
@@ -36,7 +36,7 @@ namespace DeliverySaver
             };
 
 
-            Action<string> onSubmit = (string value) =>
+            Action<string> onSubmit = (value) =>
             {
                 if (OnSubmit(value))
                 {
@@ -53,7 +53,7 @@ namespace DeliverySaver
             _parent = parent;
             _inputField = _parent.transform.Find(inputName).GetComponent<InputField>();
 
-            Action<string> onEndEdit = (string value) =>
+            Action<string> onEndEdit = (value) =>
             {
                 OnEndEdit(value);
 
@@ -64,7 +64,7 @@ namespace DeliverySaver
             };
 
 
-            Action<string> onSubmit = (string value) =>
+            Action<string> onSubmit = (value) =>
             {
                 if(OnSubmit(value))
                 {

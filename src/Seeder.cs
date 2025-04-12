@@ -28,9 +28,9 @@ namespace DeliverySaver
         public string Seed(object obj)
         {
             string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
-            byte[] plainTextBytes = System.Text.Encoding.UTF8.GetBytes(json);
+            byte[] plainTextBytes = Encoding.UTF8.GetBytes(json);
 
-            return System.Convert.ToBase64String(plainTextBytes);
+            return Convert.ToBase64String(plainTextBytes);
         }
 
         public void SeedToClipboard(object obj)
@@ -40,8 +40,8 @@ namespace DeliverySaver
 
         public T Decode<T>(string encoded)
         {
-            byte[] base64encoded = System.Convert.FromBase64String(encoded);
-            string json = System.Text.Encoding.UTF8.GetString(base64encoded);
+            byte[] base64encoded = Convert.FromBase64String(encoded);
+            string json = Encoding.UTF8.GetString(base64encoded);
 
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
         }

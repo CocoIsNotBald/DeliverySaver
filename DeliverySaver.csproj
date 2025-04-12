@@ -471,17 +471,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Include="AssetsManager.cs" />
+		<Compile Include="src\AssetsManager.cs" />
 		<Compile Include="Core.cs" />
-		<Compile Include="Input.cs" />
-		<Compile Include="ModConfig.cs" />
-		<Compile Include="Notification.cs" />
-		<Compile Include="Seeder.cs" />
-		<Compile Include="Template.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Scripts\" />
+		<Compile Include="src\Input.cs" />
+		<Compile Include="src\ModConfig.cs" />
+		<Compile Include="src\Notification.cs" />
+		<Compile Include="src\Seeder.cs" />
+		<Compile Include="src\Template.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -78,7 +78,7 @@ namespace DeliverySaver
                     return;
                 }
 
-                using (var memoryStream = new System.IO.MemoryStream())
+                using (var memoryStream = new MemoryStream())
                 {
                     stream.CopyTo(memoryStream);
                     var buffer = memoryStream.ToArray();
@@ -92,7 +92,7 @@ namespace DeliverySaver
         {
             if(valid)
             {
-                GameObject data = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>(name));
+                GameObject data = UnityEngine.Object.Instantiate(assetBundle.LoadAsset<GameObject>(name));
                 
                 return data;
             }
