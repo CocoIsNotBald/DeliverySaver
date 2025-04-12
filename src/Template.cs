@@ -173,8 +173,9 @@ namespace DeliverySaver
             Func<string, bool> action = (value) => 
             {
                 titleText.text = value;
+                string oldName = name;
                 name = value;
-                TemplateManager.Instance.GetTemplateGameData().UpdateEntry(this);
+                TemplateManager.Instance.GetTemplateGameData().UpdateTitle(oldName, this);
                 return true;
             };
 
@@ -267,6 +268,7 @@ namespace DeliverySaver
         {
             _multiplierIF.text = value.ToString();
             _multiplierIF.SendOnSubmit();
+            
             CheckStack();
         }
 
@@ -450,13 +452,13 @@ namespace DeliverySaver
 
     public class TemplateGameData
     {
-        private Dictionary<string, EntryData> _entryData = new Dictionary<string, EntryData>();
+        private SortedDictionary<string, EntryData> _entryData = new SortedDictionary<string, EntryData>();
         public string gameName { get; private set; }
         public string gameSeed { get; private set; }
         public string filename;
         public string gameFullName { get => $"{gameName}_{gameSeed}"; }
 
-        public Dictionary<string, EntryData> entryData { get => _entryData; }
+        public SortedDictionary<string, EntryData> entryData { get => _entryData; }
 
         public TemplateGameData(List<EntryData> entryData = default)
         {
@@ -491,6 +493,11 @@ namespace DeliverySaver
         public void UpdateEntry(Entry entry)
         {
             _entryData[entry.name] = new EntryData(entry);
+        }
+        
+        public void UpdateTitle(string oldTitle, Entry entry)
+        {
+            _entryData[oldTitle].name = entry.name;
         }
 
         public void RemoveEntry(Entry entry)

@@ -1,5 +1,7 @@
 ﻿# DeliverySaver 1.0.0 (pre-release)
 ## Added/Changed
+- Changed the way assets manager assetsbundle (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
+- Added a way to load file from assets (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
 - Added file to src folder instead of root folder (Commit: 85bcd7368dd910e8803218ceb4f39d50b13d6514)
 - Added Equatability for Data type (Commit: cf15c9b534445ba02126161dd6973170368cddff)
 - Ignored assets folder (Commit: cf15c9b534445ba02126161dd6973170368cddff)
@@ -9,5 +11,8 @@
 - Added resources loading with il2cpp (Commit : 86c2eff287fd7f123e9c0735d5256060e8e01f61)
 - Added close button to entry (commit: 79c38f65290c476f1c0b7a3a91065c747e1887ea)
 - Added delivery order template
+## Fixed
+- Fixed unordered dictionary from json when loading template (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
+- Fixed stack limit calculation problem (Commit: 4d6425a6837e4357637f9c54682245e848a5fca4)
 ## Know issues
 - Notification animation can is a bit buggy. Sometimes animation is flicking when nearing the end
