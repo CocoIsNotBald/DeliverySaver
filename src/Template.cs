@@ -27,6 +27,7 @@ using Il2CppScheduleOne.Tools;
 using Il2CppScheduleOne;
 using static Il2CppMono.Security.X509.X520;
 using Harmony;
+using Il2CppScheduleOne.ItemFramework;
 
 namespace DeliverySaver
 {
@@ -98,7 +99,7 @@ namespace DeliverySaver
         public float multiply = 1;
         public string shopName { get => root.transform.Find("Head/ShopName").GetComponent<Text>().text; }
 
-        private Asset _component;
+        private AssetBundle _component;
         private InputField _multiplierIF;
         private GameObject _tooLarge;
         private GameObject _insufficientBalance;
@@ -153,7 +154,7 @@ namespace DeliverySaver
             _price = root.transform.Find("Footer2/TotalCost").GetComponent<Text>();
             _rebuilder = rebuilder;
 
-            _component = AssetsManager.Instance.GetAsset("Component");
+            _component = AssetsManager.Instance.GetAssetBundle("Component");
             _rebuilder();
         }
 
@@ -200,22 +201,10 @@ namespace DeliverySaver
         {
             multiply = float.Parse(value.Replace(".", ","));
 
-            float contentCount = 0;
-
             foreach (Component component in components)
             {
                 component.UpdateContent();
-                contentCount += component.MultipliedQuantity();
-            }
-      
-            if(contentCount / 20 > 16)
-            {
-                _tooLarge.SetActive(true);
-            }
-
-            else
-            {
-                _tooLarge.SetActive(false);
+                int contentCount = component.MultipliedQuantity();
             }
 
             _price.text = totalCostLabel;
@@ -227,6 +216,26 @@ namespace DeliverySaver
         public void AddComponent(ListingEntry entry)
         {
             AddComponentWithQuantity(entry, entry.QuantityInput.text);
+        }
+
+        private void CheckStack()
+        {
+            int stack = 0;
+
+            foreach (Component component in components)
+            {
+                int contentCount = component.MultipliedQuantity();
+                stack += (int)Math.Ceiling((float)contentCount / component.stackLimit);
+            }
+
+            if (stack > 16)
+            {
+                _tooLarge.SetActive(true);
+            }
+            else
+            {
+                _tooLarge.SetActive(false);
+            }
         }
 
         public void AddComponentWithQuantity(ListingEntry entry, string quantity)
@@ -243,17 +252,22 @@ namespace DeliverySaver
             Transform imageGo = componentGo.transform.Find("Image");
             imageGo.GetComponent<RawImage>().texture = entry.Icon.sprite.texture;
 
-            components.Add(new Component(entry, price, quantity, name, titleGo.GetComponent<Text>(), this));
+            int stackLimit = entry.MatchingListing.Item.StackLimit;
+
+            components.Add(new Component(entry, price, quantity, name, titleGo.GetComponent<Text>(), this, stackLimit));
             _price.text = totalCostLabel;
 
             CheckInsufficientBalance();
             _rebuilder();
+
+            CheckStack();
         }
 
         public void UpdateMultiplierText(float value)
         {
             _multiplierIF.text = value.ToString();
             _multiplierIF.SendOnSubmit();
+            CheckStack();
         }
 
         private void CheckInsufficientBalance()
@@ -297,11 +311,14 @@ namespace DeliverySaver
         private int _baseQuantity;
         private string _name;
         private int _price;
+        private int _stackLimit;
 
-        public Component(ListingEntry entry, string price, string quantity, string name, Text content, Entry parent)
+        public Component(ListingEntry entry, string price, string quantity, string name, Text content, Entry parent, int stackLimit)
         {
             this.entry = entry;
             this.content = content;
+            
+            _stackLimit = stackLimit;
             _name = name;
             _parent = parent;
 
@@ -309,6 +326,7 @@ namespace DeliverySaver
             _baseQuantity = int.Parse(quantity);
         }
 
+        public int stackLimit { get => _stackLimit; }
         public int quantity { get => _baseQuantity; }
         public string name { get => _name; }
         public int price { get => _price; }
@@ -334,7 +352,7 @@ namespace DeliverySaver
     public class Template
     {
         public GameObject gameObject { get; private set; }
-        private Asset _entry;
+        private AssetBundle _entry;
 
         private Transform _templates;
         private VerticalLayoutGroup _vls;
@@ -360,7 +378,7 @@ namespace DeliverySaver
 
             GameObject scrollGo = gameObject.transform.Find("Mask/Content/Scroll").gameObject;
 
-            _entry = AssetsManager.Instance.GetAsset("Entry");
+            _entry = AssetsManager.Instance.GetAssetBundle("Entry");
 
             if(entries == null)
             {
@@ -636,9 +654,9 @@ namespace DeliverySaver
 
         public void Init()
         {
-            AssetsManager.Instance.LoadResources("Template", "ui.template");
-            AssetsManager.Instance.LoadResources("Entry", "ui.entry");
-            AssetsManager.Instance.LoadResources("Component", "ui.component");
+            AssetsManager.Instance.LoadAssetBundleFromResources("Template", "ui.template");
+            AssetsManager.Instance.LoadAssetBundleFromResources("Entry", "ui.entry");
+            AssetsManager.Instance.LoadAssetBundleFromResources("Component", "ui.component");
         }
 
         public Template Instantiate(List<EntryData> entries = default)
@@ -647,8 +665,6 @@ namespace DeliverySaver
             {
                 return _template;
             }
-
-            var template = AssetsManager.Instance.GetAsset("Template");
 
             Template templateInstance = new Template(entries);
             _template = templateInstance;

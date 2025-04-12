@@ -12,6 +12,7 @@ namespace DeliverySaver
     internal class Seeder
     {
         private static Seeder _instance;
+        private string signature = AssetsManager.Instance.GetAssetFile("Signature").content;
 
         public static Seeder Instance 
         { 
@@ -27,10 +28,11 @@ namespace DeliverySaver
 
         public string Seed(object obj)
         {
+            Melon<Core>.Logger.Msg($"Signature: {signature}");
             string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
-            byte[] plainTextBytes = Encoding.UTF8.GetBytes(json);
+            byte[] plainTextBytes = Encoding.UTF8.GetBytes(signature + json);
 
-            return Convert.ToBase64String(plainTextBytes);
+            return Convert.ToBase64String(plainTextBytes, Base64FormattingOptions.None);
         }
 
         public void SeedToClipboard(object obj)
@@ -38,11 +40,19 @@ namespace DeliverySaver
             GUIUtility.systemCopyBuffer = Seed(obj);
         }
 
-        public T Decode<T>(string encoded)
+        public T Decode<T>(string encoded) where T : class
         {
             byte[] base64encoded = Convert.FromBase64String(encoded);
-            string json = Encoding.UTF8.GetString(base64encoded);
+            string content = Encoding.UTF8.GetString(base64encoded);
 
+            Melon<Core>.Logger.Msg($"Decoded: {content}");
+
+            if (!content.StartsWith(signature))
+            {
+                throw new Exception("Invalid seed");
+            }
+
+            string json = content.Substring(signature.Length);
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
         }
     }

@@ -41,10 +41,11 @@ namespace DeliverySaver
 
             TemplateManager.Instance.Init();
 
-            AssetsManager.Instance.LoadResources("SaveButton", "ui.savebutton");
-            AssetsManager.Instance.LoadResources("TemplateName", "ui.templatename");
-            AssetsManager.Instance.LoadResources("Notification", "ui.notification");
-            AssetsManager.Instance.LoadResources("TemplateSeed", "ui.templateseed");
+            AssetsManager.Instance.LoadFileFromResources("Signature", "signature.txt");
+            AssetsManager.Instance.LoadAssetBundleFromResources("SaveButton", "ui.savebutton");
+            AssetsManager.Instance.LoadAssetBundleFromResources("TemplateName", "ui.templatename");
+            AssetsManager.Instance.LoadAssetBundleFromResources("Notification", "ui.notification");
+            AssetsManager.Instance.LoadAssetBundleFromResources("TemplateSeed", "ui.templateseed");
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -106,12 +107,7 @@ namespace DeliverySaver
         {
             try
             {
-                byte[] base64encoded = System.Convert.FromBase64String(seed);
-                string json = System.Text.Encoding.UTF8.GetString(base64encoded);
-
-                List<EntryData> entry = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(json);
-
-                // List<EntryData> entry = Seeder.Instance.Decode<List<EntryData>>(seed);
+                List<EntryData> entry = Seeder.Instance.Decode<List<EntryData>>(seed);
 
                 if (entry == null)
                 {

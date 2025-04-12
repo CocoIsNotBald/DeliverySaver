@@ -17,20 +17,19 @@ namespace DeliverySaver
         Resources,
     }
 
-    class Asset
+    abstract class Asset
     {
         public string name { get; }
         public string path { get; private set; }
         public AssetAccessType assetAccessType { get; }
-        public Il2CppAssetBundle assetBundle { get; private set; }
-        bool valid { get; } = false;
+        public bool valid { get; private set; } = false;
 
         public Asset(AssetAccessType assetAccessType, string name, string path)
         {
             this.assetAccessType = assetAccessType;
             this.name = name;
-            
-            switch(assetAccessType)
+
+            switch (assetAccessType)
             {
                 case AssetAccessType.FileSystem:
                     LoadFromFile(path);
@@ -41,36 +40,28 @@ namespace DeliverySaver
                 default:
                     throw new ArgumentOutOfRangeException(nameof(assetAccessType), assetAccessType, null);
             }
-            
-            if (assetBundle == null)
-            {
-                Melon<Core>.Logger.Warning($"Cannot load asset {this.path}");
-                return;
-            }
 
             valid = true;
         }
 
         private void LoadFromFile(string path)
         {
-           
-
             this.path = Path.Combine(ModConfig.AssetPath, path);
 
             if (!File.Exists(this.path))
             {
-                Melon<Core>.Logger.Warning($"ACannot find asset {this.path}");
+                Melon<Core>.Logger.Warning($"Cannot find asset {this.path}");
                 return;
             }
 
-            assetBundle = Il2CppAssetBundleManager.LoadFromFile(this.path);
+            LoadFromFileBase(this.path);
         }
 
         private void LoadFromResources(string path)
         {
             this.path = $"{AssetsManager.Instance.resourcesPrefix}{path}";
 
-            using(var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(this.path))
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(this.path))
             {
                 if (stream == null)
                 {
@@ -78,33 +69,93 @@ namespace DeliverySaver
                     return;
                 }
 
-                using (var memoryStream = new MemoryStream())
-                {
-                    stream.CopyTo(memoryStream);
-                    var buffer = memoryStream.ToArray();
-                    var il2cppStream = new Il2CppSystem.IO.MemoryStream(buffer);
-                    assetBundle = Il2CppAssetBundleManager.LoadFromStream(il2cppStream);
-                }
+                LoadFromResourcesBase(stream);
+            }
+        }
+
+        protected abstract void LoadFromFileBase(string path);
+        protected abstract void LoadFromResourcesBase(Stream stream);
+        public abstract void Unload();
+    }
+
+    class AssetBundle : Asset
+    {
+        public Il2CppAssetBundle assetBundle { get; private set; }
+
+        public AssetBundle(AssetAccessType assetAccessType, string name, string path) : base(assetAccessType, name, path)
+        {
+            if (assetBundle == null)
+            {
+                Melon<Core>.Logger.Warning($"Cannot load asset {this.path}");
+                return;
             }
         }
 
         public GameObject Instantiate()
         {
-            if(valid)
+            if (valid)
             {
                 GameObject data = UnityEngine.Object.Instantiate(assetBundle.LoadAsset<GameObject>(name));
-                
+
                 return data;
             }
 
             return null;
         }
 
-        public void Unload()
+        public override void Unload()
         {
             if (valid)
             {
                 assetBundle.Unload(true);
+            }
+        }
+
+        protected override void LoadFromFileBase(string path)
+        {
+            assetBundle = Il2CppAssetBundleManager.LoadFromFile(path);
+        }
+
+        protected override void LoadFromResourcesBase(Stream stream)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                stream.CopyTo(memoryStream);
+                var buffer = memoryStream.ToArray();
+                var il2cppStream = new Il2CppSystem.IO.MemoryStream(buffer);
+                assetBundle = Il2CppAssetBundleManager.LoadFromStream(il2cppStream);
+            }
+        }
+    }
+
+    class AssetFile : Asset
+    {
+        public string content { get; private set; }
+
+        public AssetFile(AssetAccessType assetAccessType, string name, string path) : base(assetAccessType, name, path)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                Melon<Core>.Logger.Warning($"Cannot load asset {this.path}");
+                return;
+            }
+        }
+
+        public override void Unload()
+        {
+            content = "";
+        }
+
+        protected override void LoadFromFileBase(string path)
+        {
+            content = File.ReadAllText(path);
+        }
+
+        protected override void LoadFromResourcesBase(Stream stream)
+        {
+            using (var reader = new StreamReader(stream))
+            {
+                content = reader.ReadToEnd();
             }
         }
     }
@@ -129,23 +180,45 @@ namespace DeliverySaver
 
         AssetsManager() { }
 
-        public void LoadFile(string name, string path)
+        public void LoadAssetBundleFromPath(string name, string path)
         {
-            assets.Add(new Asset(AssetAccessType.FileSystem,name, path));
+            assets.Add(new AssetBundle(AssetAccessType.FileSystem, name, path));
         }
 
-        public void LoadResources(string name, string path)
+        public void LoadAssetBundleFromResources(string name, string path)
         {
-            assets.Add(new Asset(AssetAccessType.Resources, name, path));
+            assets.Add(new AssetBundle(AssetAccessType.Resources, name, path));
         }
 
-        public Asset GetAsset(string name)
+        public void LoadFileFromPath(string name, string path)
+        {
+            assets.Add(new AssetFile(AssetAccessType.FileSystem, name, path));
+        }
+        public void LoadFileFromResources(string name, string path)
+        {
+            assets.Add(new AssetFile(AssetAccessType.Resources, name, path));
+        }
+
+        public AssetBundle GetAssetBundle(string name)
         {
             foreach (Asset asset in assets)
             {
-                if (asset.name == name)
+                if (asset.name == name && asset is AssetBundle)
                 {
-                    return asset;
+                    return (AssetBundle)asset;
+                }
+            }
+            Melon<Core>.Logger.Warning($"Get: Cannot find asset {name}");
+            return null;
+        }
+
+        public AssetFile GetAssetFile(string name)
+        {
+            foreach (Asset asset in assets)
+            {
+                if (asset.name == name && asset is AssetFile)
+                {
+                    return (AssetFile)asset;
                 }
             }
             Melon<Core>.Logger.Warning($"Get: Cannot find asset {name}");
@@ -170,9 +243,9 @@ namespace DeliverySaver
         {
             foreach (Asset asset in assets)
             {
-                if (asset.name == name)
+                if (asset.name == name && asset is AssetBundle)
                 {
-                    return asset.Instantiate();
+                    return ((AssetBundle)asset).Instantiate();
                 }
             }
             Melon<Core>.Logger.Warning($"Instantiate: Cannot find asset {name}");

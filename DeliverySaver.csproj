@@ -14,6 +14,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
+		<EmbeddedResource Include="assets/signature.txt" />
 		<EmbeddedResource Include="assets/ui/notification" />
 		<EmbeddedResource Include="assets/ui/component" />
 		<EmbeddedResource Include="assets/ui/entry" />

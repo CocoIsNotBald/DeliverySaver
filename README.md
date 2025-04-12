@@ -2,10 +2,8 @@
  
  A mod that save delivery order as a template to be reusable
 
- ## Know issues
-	- Sharing seed can be dangerous, Since the seed is encoded in base64, It can maybe cause disguised attack
-	- Notification animation can is a bit buggy
-	- The mod is not compatible with other mods that modify the delivery system
+## Changelog
+[CHANGELOG.md](CHANGELOG.md)
 
 ## Contact me
 
