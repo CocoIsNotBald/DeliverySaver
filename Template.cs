@@ -23,10 +23,14 @@ using Unity.Services.Core.Internal.Serialization;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Il2CppScheduleOne.Tools;
+using Il2CppScheduleOne;
+using static Il2CppMono.Security.X509.X520;
+using Harmony;
 
 namespace DeliverySaver
 {
-    public class ComponentData
+    public class ComponentData : IEquatable<ComponentData>
     {
         public string name;
         public string quantity;
@@ -43,8 +47,15 @@ namespace DeliverySaver
             name = component.name;
             quantity = component.quantity.ToString();
         }
+
+        public bool Equals(ComponentData other)
+        {
+            return
+                name == other.name &&
+                quantity == other.quantity;
+        }
     }
-    public class EntryData
+    public class EntryData : IEquatable<EntryData>
     {
         public string name;
         public string shopName;
@@ -68,12 +79,21 @@ namespace DeliverySaver
             multiplier = entry.multiply;
             components = entry.components.Select(c => new ComponentData(c)).ToList(); // Fix: Convert each Component to ComponentJson
         }
+
+        public bool Equals(EntryData other)
+        {
+            return
+                name == other.name &&
+                shopName == other.shopName &&
+                multiplier == other.multiplier &&
+                components.SequenceEqual(other.components);
+        }
     }
 
     public class Entry
     {
         public List<Component> components = new List<Component>();
-        public string name { get; }
+        public string name { get; private set; }
         public GameObject root;
         public float multiply = 1;
         public string shopName { get => root.transform.Find("Head/ShopName").GetComponent<Text>().text; }
@@ -94,13 +114,26 @@ namespace DeliverySaver
             root.GetComponent<Button>().onClick.AddListener(callback);
 
             Transform titleGo = root.transform.Find("Head/Header/Title");
-            titleGo.GetComponent<Text>().text = title;
+            Text titleText = titleGo.GetComponent<Text>();
+            titleText.text = title;
+
+            Transform titleInput = root.transform.Find("Head/Header/ChangeNameInput");
+
+            InputUI inputTitleUi = new InputUI(titleInput.GetComponent<InputField>());
+            inputTitleUi.OnSubmit += ChangeTitle(titleText);
+
+            titleGo.GetComponent<Button>().onClick.AddListener(OnTitleEdit(inputTitleUi));
 
             Transform shopGo = root.transform.Find("Head/ShopName");
             shopGo.GetComponent<Text>().text = shop.name;
 
             Transform headerImage = root.transform.Find("Head/Background");
             headerImage.GetComponent<Image>().color = shop.HeaderImage.color;
+
+            Transform uploadIcon = root.transform.Find("Head/Header/UploadIcon");
+            
+            Action action = () => { OnSingleExportClick(); };
+            uploadIcon.GetComponent<Button>().onClick.AddListener(action);
 
             Transform closeButton = root.transform.Find("Head/Header/CloseButton");
 
@@ -122,6 +155,37 @@ namespace DeliverySaver
 
             _component = AssetsManager.Instance.GetAsset("Component");
             _rebuilder();
+        }
+
+        private Action OnTitleEdit(InputUI inputUI)
+        {
+            Action onTitleEdit = () => {
+                inputUI.InputField.text = name;
+                inputUI.Activate();
+            };
+
+            return onTitleEdit;
+        }
+
+        private Func<string, bool> ChangeTitle(Text titleText)
+        {
+            Func<string, bool> action = (string value) => 
+            {
+                titleText.text = value;
+                name = value;
+                TemplateManager.Instance.GetTemplateGameData().UpdateEntry(this);
+                return true;
+            };
+
+            return action;
+        }
+
+        private void OnSingleExportClick()
+        {
+            Notification.Instance.Show("Entry seed copied to clipboard");
+
+            EntryData entryData = TemplateManager.Instance.GetTemplateGameData().entryData[name];
+            Seeder.Instance.SeedToClipboard(new List<EntryData> { entryData });
         }
 
         private void Close()
@@ -160,14 +224,18 @@ namespace DeliverySaver
             CheckInsufficientBalance();
         }
 
-        public void AddComponent(ListingEntry entry, Entry parent)
+        public void AddComponent(ListingEntry entry)
+        {
+            AddComponentWithQuantity(entry, entry.QuantityInput.text);
+        }
+
+        public void AddComponentWithQuantity(ListingEntry entry, string quantity)
         {
             string name = entry.ItemNameLabel.text;
-            string quantity = entry.QuantityInput.text;
             string price = entry.ItemPriceLabel.text;
 
             GameObject componentGo = _component.Instantiate();
-            componentGo.transform.SetParent(parent.root.transform.Find("Content"), false);
+            componentGo.transform.SetParent(root.transform.Find("Content"), false);
 
             Transform titleGo = componentGo.transform.Find("Content");
             titleGo.GetComponent<Text>().text = $"{quantity}x {name}";
@@ -286,6 +354,10 @@ namespace DeliverySaver
                 return;
             }
 
+            Action callback = () => { OnExportTemplate(); };
+
+            gameObject.transform.Find("Mask/Content/ExportSeed").GetComponent<Button>().onClick.AddListener(callback); ;
+
             GameObject scrollGo = gameObject.transform.Find("Mask/Content/Scroll").gameObject;
 
             _entry = AssetsManager.Instance.GetAsset("Entry");
@@ -295,33 +367,18 @@ namespace DeliverySaver
                 return;
             }
 
-            foreach (EntryData entry in entries)
+            foreach (EntryData data in entries)
             {
-                DeliveryShop shop = DeliveryApp.Instance.GetShop(entry.shopName);
-                Entry newEntry = AddEntry(entry.name, shop);
-
-                List<ComponentData> components = entry.components.ToList();
-
-                foreach (ListingEntry listingEntry in shop.listingEntries)
-                {
-                    if (components.Count > 0)
-                    {
-                        if (listingEntry.ItemNameLabel.text == components[0].name)
-                        {
-                            listingEntry.QuantityInput.text = components[0].quantity;
-                            newEntry.AddComponent(listingEntry, newEntry);
-                            listingEntry.QuantityInput.text = "0";
-                            components.RemoveAt(0);
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }   
-                }
-
-                newEntry.UpdateMultiplierText(entry.multiplier);
+                AddEntryData(data);
             }
+        }
+
+        private void OnExportTemplate()
+        {
+            Notification.Instance.Show("Template seed copied to clipboard");
+
+            List<EntryData> entryDatas = TemplateManager.Instance.GetTemplateGameData().entryData.Values.ToList();
+            Seeder.Instance.SeedToClipboard(entryDatas);
         }
 
         private void UpdateTemplates()
@@ -332,6 +389,32 @@ namespace DeliverySaver
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(_vls.GetComponent<RectTransform>());
             }
+        }
+
+        public void AddEntryData(EntryData entryData)
+        {
+            DeliveryShop shop = DeliveryApp.Instance.GetShop(entryData.shopName);
+            Entry entry = AddEntry(entryData.name, shop);
+
+            List<ComponentData> components = entryData.components;
+
+            foreach (ListingEntry listingEntry in shop.listingEntries)
+            {
+                if (components.Count > 0)
+                {
+                    if (listingEntry.ItemNameLabel.text == components[0].name)
+                    {
+                        entry.AddComponentWithQuantity(listingEntry, components[0].quantity);
+                        components.RemoveAt(0);
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            entry.UpdateMultiplierText(entryData.multiplier);
         }
 
         public Entry AddEntry(string title, DeliveryShop shop)
@@ -369,10 +452,7 @@ namespace DeliverySaver
                 return;
             }
 
-            foreach (EntryData data in entryData)
-            {
-                _entryData.Add(data.name, data);
-            }
+            Populate(entryData);
         }
 
         public bool IsEntryRegister(string name)
@@ -399,11 +479,72 @@ namespace DeliverySaver
         {
             _entryData.Remove(entry.name);
         }
+
+        public void Populate(List<EntryData> entryData)
+        {
+            foreach (EntryData data in entryData)
+            {
+                if (HasExactEntry(data))
+                {
+                    if(entryData.Count == 1)
+                    {
+                        throw new EntryAlreadyExistsException("Entry already exists");
+                    }
+                    else
+                    {
+                        Notification.Instance.Show($"Entry {data.name} already exists");
+                    }
+                    continue;
+                }
+
+                data.name = FindNameForEntry(data);
+
+                _entryData.Add(data.name, data);
+
+                if(TemplateManager.Instance.template != null)
+                {
+                    TemplateManager.Instance.template.AddEntryData(data);
+                }
+            }
+        }
+
+        private bool HasExactEntry(EntryData entry)
+        {
+            if(_entryData.ContainsKey(entry.name))
+            {
+                return entry.Equals(_entryData[entry.name]);
+            }
+
+            return false;
+        }
+
+        private string FindNameForEntry(EntryData data, int count = 0)
+        {
+            if (_entryData.ContainsKey(data.name))
+            {
+                data.name = data.name.Replace($" ({count})", "");
+                count += 1;
+                string endString = $"{data.name} ({count})";
+                data.name = endString;
+                return FindNameForEntry(data, count);
+            }
+
+            return data.name;
+        }
+    }
+
+    public class EntryAlreadyExistsException : Exception
+    {
+        public EntryAlreadyExistsException(string message) : base(message)
+        {
+        }
     }
 
     public class TemplateManager
     {
         public List<TemplateGameData> templates = new List<TemplateGameData>();
+        private Template _template = null;
+
         private static TemplateManager _instance;
         public static TemplateManager Instance
         {
@@ -416,6 +557,8 @@ namespace DeliverySaver
                 return _instance;
             }
         }
+
+        public Template template { get => _template; }
 
         private string GetGameFullName()
         {
@@ -464,14 +607,9 @@ namespace DeliverySaver
             File.WriteAllText(Path.Combine(ModConfig.ModRootFile, template.filename), json);
         }
 
-        public Template GetCurrentTemplateGame()
+        public TemplateGameData GetCurrentTemplateGame()
         {
-            TemplateGameData gameData = templates.FirstOrDefault(t => t.gameFullName == GetGameFullName());
-            if (gameData == null)
-            {
-                return null;
-            }
-            return Instantiate(gameData.entryData.Values.ToList());
+            return templates.FirstOrDefault(t => t.gameFullName == GetGameFullName());
         }
 
         public Template Load(string file)
@@ -488,7 +626,12 @@ namespace DeliverySaver
             List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(data);
             templates.Add(new TemplateGameData(entries));
 
-            return Instantiate(entries);
+            return Instantiate(templates.Last().entryData.Values.ToList());
+        }
+
+        public void Populate(List<EntryData> entries)
+        {
+            GetCurrentTemplateGame().Populate(entries);
         }
 
         public void Init()
@@ -497,11 +640,18 @@ namespace DeliverySaver
             AssetsManager.Instance.LoadResources("Entry", "ui.entry");
             AssetsManager.Instance.LoadResources("Component", "ui.component");
         }
-        private Template Instantiate(List<EntryData> entries = default)
+
+        public Template Instantiate(List<EntryData> entries = default)
         {
+            if(_template != null && _template.gameObject != null)
+            {
+                return _template;
+            }
+
             var template = AssetsManager.Instance.GetAsset("Template");
 
             Template templateInstance = new Template(entries);
+            _template = templateInstance;
             return templateInstance;
         }
     }

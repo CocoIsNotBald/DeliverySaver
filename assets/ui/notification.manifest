@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2874254940
+CRC: 1890207134
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9ffb0008cc7df54197d4536e860f403d
+    Hash: aab515f1fad97572c83b7a72b1844920
   TypeTreeHash:
     serializedVersion: 2
-    Hash: dd94de2547c8cab7747216e296f31862
+    Hash: 6aa91614dffb49d426612f81bcf53a79
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9ffb0008cc7df54197d4536e860f403d
+    Hash: aab515f1fad97572c83b7a72b1844920
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -20,12 +20,16 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
 - Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -40,23 +44,9 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.AnimationTriggers
-- AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.ColorBlock
-- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.FontData
 - AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.InputField/EndEditEvent
-- AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.InputField/OnChangeEvent
-- AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.InputField/SubmitEvent
-- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
-- AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.Navigation
-- AssemblyName: UnityEngine.UI
-  ClassName: UnityEngine.UI.SpriteState
 Assets:
-- Assets/prefab/TemplateName.prefab
+- Assets/prefab/Notification.prefab
 Dependencies: []
