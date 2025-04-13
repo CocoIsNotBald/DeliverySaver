@@ -5,18 +5,10 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.0", "Coco", null)]
+[assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.2", "Coco", null)]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 // Phone dimensions 1200x800
-class SomeMono : MonoBehaviour
-{
-    public void Start()
-    {
-        // This is just a placeholder to ensure the class is not empty.
-    }
-}
-
 // Delivery app notification position : 0 200 0 size : 500x75
 namespace DeliverySaver
 {
@@ -27,25 +19,34 @@ namespace DeliverySaver
         private bool _loadTemplate = false;
         private DeliveryShop _deliveryShop = null;
         private GameObject templateContainer = null;
+        private bool _errorMode = false;
 
         InputUI templateSeedInput = null;
         InputUI templateNameInput = null;
         public override void OnInitializeMelon()
         {
-            if (!Directory.Exists(ModConfig.ModRootFile))
+            try
             {
-                Directory.CreateDirectory(ModConfig.ModRootFile);
+                if (!Directory.Exists(ModConfig.ModRootFile))
+                {
+                    Directory.CreateDirectory(ModConfig.ModRootFile);
+                }
+
+                AssetsManager.Instance.resourcesPrefix = "DeliverySaver.assets.";
+
+                TemplateManager.Instance.Init();
+
+                AssetsManager.Instance.LoadFileFromResources("Signature", "signature.txt");
+                AssetsManager.Instance.LoadAssetBundleFromResources("SaveButton", "ui.savebutton");
+                AssetsManager.Instance.LoadAssetBundleFromResources("TemplateName", "ui.templatename");
+                AssetsManager.Instance.LoadAssetBundleFromResources("Notification", "ui.notification");
+                AssetsManager.Instance.LoadAssetBundleFromResources("TemplateSeed", "ui.templateseed");
             }
-
-            AssetsManager.Instance.resourcesPrefix = "DeliverySaver.assets.";
-
-            TemplateManager.Instance.Init();
-
-            AssetsManager.Instance.LoadFileFromResources("Signature", "signature.txt");
-            AssetsManager.Instance.LoadAssetBundleFromResources("SaveButton", "ui.savebutton");
-            AssetsManager.Instance.LoadAssetBundleFromResources("TemplateName", "ui.templatename");
-            AssetsManager.Instance.LoadAssetBundleFromResources("Notification", "ui.notification");
-            AssetsManager.Instance.LoadAssetBundleFromResources("TemplateSeed", "ui.templateseed");
+            catch (Exception ex)
+            {
+                LoggerInstance.Error("There is a issue pls report it to the developer");
+                LoggerInstance.Error(ex);
+            }
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -61,31 +62,50 @@ namespace DeliverySaver
         
         public override void OnApplicationQuit()
         {
-            TemplateManager.Instance.Save();
+            try
+            {
+                TemplateManager.Instance.Save();
+            }
+            catch (Exception ex)
+            {
+                LoggerInstance.Error("There is a issue pls report it to the developer");
+                LoggerInstance.Error(ex);
+            }
         }
 
         public override void OnUpdate()
         {
-            if(_scene == "Main")
+            try
             {
-                if (_loadTemplate)
+                if (_scene == "Main" && !_errorMode)
                 {
-                    AddTemplatePanel(DeliveryApp.Instance);
-                    AddNotificationPanel(DeliveryApp.Instance);
-                    _loadTemplate = false;
-                }
-                    
-                if (DeliveryApp.Instance && GameManager.Instance && !_loaded)
-                {
-                    templateContainer = new GameObject("TemplateContainer");
-                    templateContainer.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
+                    if (_loadTemplate)
+                    {
+                        AddTemplatePanel(DeliveryApp.Instance);
+                        AddNotificationPanel(DeliveryApp.Instance);
+                        _loadTemplate = false;
+                    }
 
-                    InitTemplateName();
-                    InitTemplateSeed();
-                    AddAppSaveButton(DeliveryApp.Instance);
-                    _loaded = true;
-                    _loadTemplate = true;
+                    if (DeliveryApp.Instance && GameManager.Instance && !_loaded)
+                    {
+                        // TemplateManager.Instance.InstantiateGameObject();
+
+                        templateContainer = new GameObject("TemplateContainer");
+                        templateContainer.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
+
+                        InitTemplateName();
+                        InitTemplateSeed();
+                        AddAppSaveButton(DeliveryApp.Instance);
+                        _loaded = true;
+                        _loadTemplate = true;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                LoggerInstance.Error("There is a issue pls report it to the developer");
+                LoggerInstance.Error(ex);
+                _errorMode = true;
             }
         }
 
@@ -115,6 +135,7 @@ namespace DeliverySaver
                 }
 
                 TemplateManager.Instance.Populate(entry);
+                TemplateManager.Instance.template.Open();
                 return true;
             }
             catch (EntryAlreadyExistsException e)
@@ -152,7 +173,7 @@ namespace DeliverySaver
 
         private void AddTemplatePanel(DeliveryApp app)
         {
-            if(TemplateManager.Instance.HasGame())
+            if (TemplateManager.Instance.HasGame())
             {
                 List<EntryData> data = TemplateManager.Instance.GetCurrentTemplateGame().entryData.Values.ToList();
                 TemplateManager.Instance.Instantiate(data);
@@ -227,6 +248,7 @@ namespace DeliverySaver
             }
 
             TemplateManager.Instance.GetTemplateGameData().RegisterEntry(entry);
+            TemplateManager.Instance.template.Open();
 
             return true;
         }

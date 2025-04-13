@@ -4,8 +4,10 @@ All the changes, fixes and improvements made to the mod.
 
 ## DeliverySaver 1.0.2
 ### Fixed
-- Fixed counterintuitive close behaviour for inputs
-- Close stream after the assets bundle are fully load
+- Fixed counterintuitive close behaviour for inputs ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
+- Close stream after the assets bundle are fully load ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
+### Know major issues
+- When changing save. Mod are trying load data from a json file but failed and this provoke looping and reinstantiate every object with will cause memory issues and potential game crash. I've tempered the issues with better error handling
 
 ## DeliverySaver 1.0.1
 ### Fixed

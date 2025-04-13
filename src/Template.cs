@@ -46,7 +46,7 @@ namespace DeliverySaver
         public ComponentData(Component component)
         {
             name = component.name;
-            quantity = component.quantity.ToString();
+            // quantity = component.quantity.ToString();
         }
 
         public bool Equals(ComponentData other)
@@ -75,10 +75,10 @@ namespace DeliverySaver
 
         public EntryData(Entry entry)
         {
-            name = entry.name;
-            shopName = entry.shopName;
-            multiplier = entry.multiply;
-            components = entry.components.Select(c => new ComponentData(c)).ToList(); // Fix: Convert each Component to ComponentJson
+            //name = entry.name;
+            //shopName = entry.shopName;
+            //multiplier = entry.multiply;
+            //components = entry.components.Select(c => new ComponentData(c)).ToList(); // Fix: Convert each Component to ComponentJson
         }
 
         public bool Equals(EntryData other)
@@ -132,7 +132,7 @@ namespace DeliverySaver
             headerImage.GetComponent<Image>().color = shop.HeaderImage.color;
 
             Transform uploadIcon = root.transform.Find("Head/Header/UploadIcon");
-            
+
             Action action = () => { OnSingleExportClick(); };
             uploadIcon.GetComponent<Button>().onClick.AddListener(action);
 
@@ -160,7 +160,8 @@ namespace DeliverySaver
 
         private Action OnTitleEdit(InputUI inputUI)
         {
-            Action onTitleEdit = () => {
+            Action onTitleEdit = () =>
+            {
                 inputUI.InputField.text = name;
                 inputUI.Activate();
             };
@@ -170,7 +171,7 @@ namespace DeliverySaver
 
         private Func<string, bool> ChangeTitle(Text titleText)
         {
-            Func<string, bool> action = (value) => 
+            Func<string, bool> action = (value) =>
             {
                 titleText.text = value;
                 string oldName = name;
@@ -268,7 +269,7 @@ namespace DeliverySaver
         {
             _multiplierIF.text = value.ToString();
             _multiplierIF.SendOnSubmit();
-            
+
             CheckStack();
         }
 
@@ -319,12 +320,12 @@ namespace DeliverySaver
         {
             this.entry = entry;
             this.content = content;
-            
+
             _stackLimit = stackLimit;
             _name = name;
             _parent = parent;
 
-            _price = int.Parse(price.Replace("$",""));
+            _price = int.Parse(price.Replace("$", ""));
             _baseQuantity = int.Parse(quantity);
         }
 
@@ -347,17 +348,22 @@ namespace DeliverySaver
         public void UpdateContent()
         {
             content.text = $"{MultipliedQuantity().ToString()}x {name}";
-            
+
         }
     }
 
     public class Template
     {
         public GameObject gameObject { get; private set; }
-        private AssetBundle _entry;
+        public bool isOpen { get => _isOpen; }
 
+        private Button _openButton;
+        private AssetBundle _entry;
         private Transform _templates;
         private VerticalLayoutGroup _vls;
+        private bool _isOpen;
+        private bool _deliveryAppWasEnabled;
+        private Animator _animator;
 
         private List<Entry> _entries = new List<Entry>();
 
@@ -379,10 +385,17 @@ namespace DeliverySaver
             gameObject.transform.Find("Mask/Content/ExportSeed").GetComponent<Button>().onClick.AddListener(callback); ;
 
             GameObject scrollGo = gameObject.transform.Find("Mask/Content/Scroll").gameObject;
+            GameObject openGo = gameObject.transform.Find("Mask/Content/Open").gameObject;
+
+            _openButton = openGo.GetComponent<Button>();
+            _animator = gameObject.transform.Find("Mask/Content").GetComponent<Animator>();
+
+            Action open = () => _isOpen = !_isOpen;
+            _openButton.onClick.AddListener(open);
 
             _entry = AssetsManager.Instance.GetAssetBundle("Entry");
 
-            if(entries == null)
+            if (entries == null)
             {
                 return;
             }
@@ -391,6 +404,38 @@ namespace DeliverySaver
             {
                 AddEntryData(data);
             }
+
+            _isOpen = false;
+        }
+
+        public void Open()
+        {
+            if (!_isOpen)
+            {
+                _openButton.onClick.Invoke();
+            }
+        }
+
+        public void UpdateTemplate()
+        {
+            if (
+                DeliveryApp.instance != null &&
+                DeliveryApp.Instance.appContainer != null &&
+                DeliveryApp.Instance.appContainer.gameObject != null
+            )
+            {
+                if (!_deliveryAppWasEnabled && IsDeliveryAppShown() && _isOpen)
+                {
+                    _animator.SetTrigger("OpenFast");
+                }
+
+                _deliveryAppWasEnabled = IsDeliveryAppShown();
+            }
+        }
+
+        private bool IsDeliveryAppShown()
+        {
+            return DeliveryApp.Instance.appContainer.gameObject.active;
         }
 
         private void OnExportTemplate()
@@ -413,6 +458,13 @@ namespace DeliverySaver
 
         public void AddEntryData(EntryData entryData)
         {
+
+            //if (gameObject == null)
+            //{
+            //    gameObject = AssetsManager.Instance.Instantiate("Template");
+            //    _templates = gameObject.transform.Find("Mask/Content/Scroll/View/Templates");
+            //}
+
             DeliveryShop shop = DeliveryApp.Instance.GetShop(entryData.shopName);
             Entry entry = AddEntry(entryData.name, shop);
 
@@ -440,11 +492,16 @@ namespace DeliverySaver
         public Entry AddEntry(string title, DeliveryShop shop)
         {
             GameObject entryGo = _entry.Instantiate();
+            Melon<Core>.Logger.Msg("Entry is instantiate");
+
             entryGo.transform.SetParent(_templates.transform, false);
+            Melon<Core>.Logger.Msg("Parent of entry gameobject is set");
 
             Entry entry = new Entry(title, shop, entryGo, UpdateTemplates);
+            Melon<Core>.Logger.Msg("Entry object is created");
 
             _entries.Add(entry);
+            Melon<Core>.Logger.Msg("Entry added to entries");
 
             return entry;
         }
@@ -494,7 +551,7 @@ namespace DeliverySaver
         {
             _entryData[entry.name] = new EntryData(entry);
         }
-        
+
         public void UpdateTitle(string oldTitle, Entry entry)
         {
             _entryData[oldTitle].name = entry.name;
@@ -511,7 +568,7 @@ namespace DeliverySaver
             {
                 if (HasExactEntry(data))
                 {
-                    if(entryData.Count == 1)
+                    if (entryData.Count == 1)
                     {
                         throw new EntryAlreadyExistsException("Entry already exists");
                     }
@@ -526,7 +583,7 @@ namespace DeliverySaver
 
                 _entryData.Add(data.name, data);
 
-                if(TemplateManager.Instance.template != null)
+                if (TemplateManager.Instance.template != null)
                 {
                     TemplateManager.Instance.template.AddEntryData(data);
                 }
@@ -535,7 +592,7 @@ namespace DeliverySaver
 
         private bool HasExactEntry(EntryData entry)
         {
-            if(_entryData.ContainsKey(entry.name))
+            if (_entryData.ContainsKey(entry.name))
             {
                 return entry.Equals(_entryData[entry.name]);
             }
@@ -668,7 +725,7 @@ namespace DeliverySaver
 
         public Template Instantiate(List<EntryData> entries = default)
         {
-            if(_template != null && _template.gameObject != null)
+            if (_template != null && _template.gameObject != null)
             {
                 return _template;
             }
@@ -678,4 +735,39 @@ namespace DeliverySaver
             return templateInstance;
         }
     }
+
+    //public class Template
+    //{
+
+    //}
+
+    //public class TemplateManager
+    //{
+    //    private Template _template;
+    //    private static TemplateManager _instance;
+    //    public static TemplateManager Instance
+    //    {
+    //        get
+    //        {
+    //            if (_instance == null)
+    //            {
+    //                _instance = new TemplateManager();
+    //            }
+    //            return _instance;
+    //        }
+    //    }
+
+    //    // Load every assets necessary
+    //    public void Init()
+    //    {
+    //        AssetsManager.Instance.LoadAssetBundleFromResources("Template", "ui.template");
+    //        AssetsManager.Instance.LoadAssetBundleFromResources("Entry", "ui.entry");
+    //        AssetsManager.Instance.LoadAssetBundleFromResources("Component", "ui.component");
+    //    }
+
+    //    public void InstantiateGameObject()
+    //    {
+    //        throw new Exception("dqsdpqjo");
+    //    }
+    //}
 }

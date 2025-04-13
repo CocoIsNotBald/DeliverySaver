@@ -95,7 +95,7 @@ namespace DeliverySaver
         {
             if (valid)
             {
-                GameObject data = UnityEngine.Object.Instantiate(assetBundle.LoadAsset<GameObject>(name));
+                GameObject data = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>(name));
 
                 return data;
             }
