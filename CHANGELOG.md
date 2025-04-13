@@ -2,6 +2,11 @@
 
 All the changes, fixes and improvements made to the mod.
 
+## DeliverySaver 1.0.2
+### Fixed
+- Fixed counterintuitive close behaviour for inputs
+- Close stream after the assets bundle are fully load
+
 ## DeliverySaver 1.0.1
 ### Fixed
 - Fixed thunderstore app not loading the dll
@@ -20,8 +25,6 @@ All the changes, fixes and improvements made to the mod.
 - Added close button to entry ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/79c38f65290c476f1c0b7a3a91065c747e1887ea))
 - Added delivery order template ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/db30227e34a2d40d451cb131068f27f6aed7faa3))
 ### Fixed
-- Fixed counterintuitive close behaviour for inputs
-- Close stream after the assets bundle are fully load
 - Fixed entry name not updating in json ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/556d781a40b49975d9389e284ac0700094c0b3e3))
 - Fixed unordered dictionary from json when loading template ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/556d781a40b49975d9389e284ac0700094c0b3e3))
 - Fixed stack limit calculation problem ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4d6425a6837e4357637f9c54682245e848a5fca4))
