@@ -147,8 +147,8 @@ namespace DeliverySaver
 
             Action<string> multiplierAction = (value) => HandleMulitplicationInput(value);
             multiplierIF.onSubmit.AddListener(multiplierAction);
-            _multiplierIF = multiplierIF;
 
+            _multiplierIF = multiplierIF;
             _tooLarge = root.transform.Find("Footer/TooLarge").gameObject;
             _insufficientBalance = root.transform.Find("Footer2/InsufficientBalance").gameObject;
             _price = root.transform.Find("Footer2/TotalCost").GetComponent<Text>();

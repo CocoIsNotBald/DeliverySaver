@@ -66,8 +66,6 @@ namespace DeliverySaver
 
         public override void OnUpdate()
         {
-            
-
             if(_scene == "Main")
             {
                 if (_loadTemplate)
@@ -98,8 +96,10 @@ namespace DeliverySaver
             templateSeed.SetActive(false);
 
             templateSeedInput = new InputUI(templateSeed, "InputName");
-
             templateSeedInput.OnSubmit += OnSeedEnter;
+
+            Action close = () => templateSeedInput.Deactivate();
+            templateSeed.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
         }
 
 
@@ -136,8 +136,10 @@ namespace DeliverySaver
             templateName.SetActive(false);
 
             templateNameInput = new InputUI(templateName, "InputName");
-
             templateNameInput.OnSubmit += OnEntryNameValidated;
+
+            Action close = () => templateNameInput.Deactivate();
+            templateName.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
         }
 
         private void AddNotificationPanel(DeliveryApp app)

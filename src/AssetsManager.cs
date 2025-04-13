@@ -124,6 +124,7 @@ namespace DeliverySaver
                 var buffer = memoryStream.ToArray();
                 var il2cppStream = new Il2CppSystem.IO.MemoryStream(buffer);
                 assetBundle = Il2CppAssetBundleManager.LoadFromStream(il2cppStream);
+                il2cppStream.Close();
             }
         }
     }

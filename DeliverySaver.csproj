@@ -40,6 +40,9 @@
 		<Reference Include="Il2CppAmplifyImpostors.Runtime">
 			<HintPath>C:\Program Files (x86)\Steam\steamapps\common\Schedule I\MelonLoader\Il2CppAssemblies\Il2CppAmplifyImpostors.Runtime.dll</HintPath>
 		</Reference>
+		<Reference Include="Il2CppAssemblyGenerator">
+		  <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Schedule I\MelonLoader\Dependencies\Il2CppAssemblyGenerator\Il2CppAssemblyGenerator.dll</HintPath>
+		</Reference>
 		<Reference Include="Il2CppAstarPathfindingProject">
 			<HintPath>C:\Program Files (x86)\Steam\steamapps\common\Schedule I\MelonLoader\Il2CppAssemblies\Il2CppAstarPathfindingProject.dll</HintPath>
 		</Reference>
