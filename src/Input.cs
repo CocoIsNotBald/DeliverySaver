@@ -18,10 +18,23 @@ namespace DeliverySaver
         public Action<string> OnEndEdit = (_) => { };
         public Action<string> OnValueChanged = (_) => { };
         public Func<string, bool> OnSubmit = (_) => true;
+        public bool clearAfterSubmit = true;
 
         public InputField InputField => _inputField;
 
         public InputUI(InputField field)
+        {
+            InitInput(field);
+        }
+
+        public InputUI(GameObject parent, string inputName)
+        {
+            _parent = parent;
+
+            InitInput(_parent.transform.Find(inputName).GetComponent<InputField>());
+        }
+
+        private void InitInput(InputField field)
         {
             _inputField = field;
 
@@ -31,7 +44,8 @@ namespace DeliverySaver
 
                 if (_inputField.wasCanceled)
                 {
-                    Deactivate(false);
+                    Deactivate();
+                    InputField.text = value;
                 }
             };
 
@@ -46,43 +60,16 @@ namespace DeliverySaver
 
             _inputField.onEndEdit.AddListener(onEndEdit);
             _inputField.onSubmit.AddListener(onSubmit);
+            _inputField.onValueChange.AddListener(OnValueChanged);
         }
 
-        public InputUI(GameObject parent, string inputName)
-        {
-            _parent = parent;
-            _inputField = _parent.transform.Find(inputName).GetComponent<InputField>();
-
-            Action<string> onEndEdit = (value) =>
-            {
-                OnEndEdit(value);
-
-                if(_inputField.wasCanceled)
-                {
-                    Deactivate(false);
-                }
-            };
-
-
-            Action<string> onSubmit = (value) =>
-            {
-                if(OnSubmit(value))
-                {
-                    Deactivate();
-                }
-            };
-
-            _inputField.onEndEdit.AddListener(onEndEdit);
-            _inputField.onSubmit.AddListener(onSubmit);
-        }
-
-        public void Deactivate(bool changeInputOnSubmit = true, string setInputOnSubmitTo = "")
+        public void Deactivate()
         {
             if (_parent != null)
                 _parent.SetActive(false);
             GameInput.Instance.PlayerInput.ActivateInput();
-            if(changeInputOnSubmit)
-                _inputField.text = setInputOnSubmitTo;
+            if(clearAfterSubmit)
+                _inputField.text = "";
         }
 
         public Action ActivateAsAction()

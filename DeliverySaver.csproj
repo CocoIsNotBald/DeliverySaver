@@ -475,12 +475,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Include="src\GUIUtils.cs" />
+		<Compile Include="src\Ingredient.cs" />
+		<Compile Include="src\Entry.cs" />
 		<Compile Include="src\AssetsManager.cs" />
 		<Compile Include="Core.cs" />
 		<Compile Include="src\Input.cs" />
 		<Compile Include="src\ModConfig.cs" />
 		<Compile Include="src\Notification.cs" />
 		<Compile Include="src\Seeder.cs" />
+		<Compile Include="src\TemplateManager.cs" />
 		<Compile Include="src\Template.cs" />
 	</ItemGroup>
 

@@ -1,4 +1,6 @@
-﻿using Il2CppScheduleOne.DevUtilities;
+﻿using Il2CppFluffyUnderware.Curvy.Generator;
+using Il2CppScheduleOne.DevUtilities;
+using Il2CppScheduleOne.Money;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
 using UnityEngine;
@@ -16,9 +18,7 @@ namespace DeliverySaver
     {
         private string _scene;
         private bool _loaded = false;
-        private bool _loadTemplate = false;
         private DeliveryShop _deliveryShop = null;
-        private GameObject templateContainer = null;
         private bool _errorMode = false;
 
         InputUI templateSeedInput = null;
@@ -57,6 +57,11 @@ namespace DeliverySaver
             {
                 _loaded = false;
             }
+
+            if(_scene == "Menu")
+            {
+                TemplateManager.Instance.Save();
+            }
         }
 
         
@@ -79,25 +84,22 @@ namespace DeliverySaver
             {
                 if (_scene == "Main" && !_errorMode)
                 {
-                    if (_loadTemplate)
+                    if (
+                        !_loaded &&
+                        DeliveryApp.Instance && 
+                        GameManager.Instance && 
+                        MoneyManager.Instance &&
+                        GameManager.Instance.seed != 0 &&
+                        DeliveryApp.Instance.appIconButton != null
+                    )
                     {
-                        AddTemplatePanel(DeliveryApp.Instance);
-                        AddNotificationPanel(DeliveryApp.Instance);
-                        _loadTemplate = false;
-                    }
-
-                    if (DeliveryApp.Instance && GameManager.Instance && !_loaded)
-                    {
-                        // TemplateManager.Instance.InstantiateGameObject();
-
-                        templateContainer = new GameObject("TemplateContainer");
-                        templateContainer.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
-
+                        TemplateManager.Instance.CreateTemplateGameObject();
+                        TemplateManager.Instance.Load();
                         InitTemplateName();
                         InitTemplateSeed();
                         AddAppSaveButton(DeliveryApp.Instance);
+                        AddNotificationPanel(DeliveryApp.Instance);
                         _loaded = true;
-                        _loadTemplate = true;
                     }
                 }
             }
@@ -118,10 +120,18 @@ namespace DeliverySaver
             templateSeedInput = new InputUI(templateSeed, "InputName");
             templateSeedInput.OnSubmit += OnSeedEnter;
 
+            // Bind the button close (X) to deactivate the input and relieve player input
             Action close = () => templateSeedInput.Deactivate();
             templateSeed.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
-        }
+   
+            // When the import button is clicked, activate the prompt for entering a seed
+            Transform importSeed = TemplateManager.Instance.template.gameObject.transform.Find("Mask/Content/ImportSeed");
+            importSeed.GetComponent<Button>().onClick.AddListener(templateSeedInput.ActivateAsAction());
 
+            // When the V button is click, submit the input
+            Action action = () => templateSeedInput.InputField.SendOnSubmit();
+            templateSeed.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
+        }
 
         private bool OnSeedEnter(string seed)
         {
@@ -134,13 +144,15 @@ namespace DeliverySaver
                     throw new Exception();
                 }
 
-                TemplateManager.Instance.Populate(entry);
-                TemplateManager.Instance.template.Open();
+                foreach (EntryData entryData in entry)
+                {
+                    TemplateManager.Instance.AddEntryData(entryData);
+                }
                 return true;
             }
-            catch (EntryAlreadyExistsException e)
+            catch (EntryAlreadyExistsException)
             {
-                Notification.Instance.Show(e.Message);
+                Notification.Instance.Show("Entry already registered");
                 return false;
             }
             catch (Exception e)
@@ -161,6 +173,10 @@ namespace DeliverySaver
 
             Action close = () => templateNameInput.Deactivate();
             templateName.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
+
+            // When the V button is click, submit the input
+            Action action = () => templateNameInput.InputField.SendOnSubmit();
+            templateName.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
         }
 
         private void AddNotificationPanel(DeliveryApp app)
@@ -169,26 +185,6 @@ namespace DeliverySaver
 
             go.transform.SetParent(app.appContainer.transform, false);
             go.transform.localPosition = new Vector3(0, 200, 0);
-        }
-
-        private void AddTemplatePanel(DeliveryApp app)
-        {
-            if (TemplateManager.Instance.HasGame())
-            {
-                List<EntryData> data = TemplateManager.Instance.GetCurrentTemplateGame().entryData.Values.ToList();
-                TemplateManager.Instance.Instantiate(data);
-            }
-            else
-            {
-                TemplateManager.Instance.Load(TemplateManager.Instance.GetTemplateForSave());
-            }
-
-            TemplateManager.Instance.template.gameObject.transform.SetParent(templateContainer.transform, false);
-            TemplateManager.Instance.template.gameObject.transform.localPosition = new Vector3(393, -32, 0);
-
-            Transform importSeed = TemplateManager.Instance.template.gameObject.transform.Find("Mask/Content/ImportSeed");
-
-            importSeed.GetComponent<Button>().onClick.AddListener(templateSeedInput.ActivateAsAction());
         }
 
         private void AddAppSaveButton(DeliveryApp app)
@@ -205,7 +201,7 @@ namespace DeliverySaver
                     go.transform.SetParent(panel, false);
                     go.transform.localPosition = new Vector3(122, -13, 0);
 
-                    Action setShop = () => { OnShopSelected(deliveryShop); };
+                    Action setShop = () => OnShopSelected(deliveryShop);
                     saveButton.onClick.AddListener(setShop);
                 }
                 else
@@ -231,23 +227,13 @@ namespace DeliverySaver
                 return false;
             }
 
-            if (TemplateManager.Instance.GetTemplateGameData().IsEntryRegister(name))
+            if (TemplateManager.Instance.IsEntryRegister(name))
             {
                 Notification.Instance.Show("Name already taken");
                 return false;
             }
 
-            Entry entry = TemplateManager.Instance.template.AddEntry(templateNameInput.InputField.text, _deliveryShop);
-
-            foreach (ListingEntry listingEntry in _deliveryShop.listingEntries)
-            {
-                if (listingEntry.QuantityInput.text != "0")
-                {
-                    entry.AddComponent(listingEntry);
-                }
-            }
-
-            TemplateManager.Instance.GetTemplateGameData().RegisterEntry(entry);
+            TemplateManager.Instance.AddEntry(templateNameInput.InputField.text, _deliveryShop);
             TemplateManager.Instance.template.Open();
 
             return true;

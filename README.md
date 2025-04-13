@@ -11,6 +11,10 @@ A mod that save delivery order as a template to be reusable
 - Work in multiplayer
 - Template are saved in a json format and per save file to avoid overwhelming the user with too many templates
 
+## Where template files are saved ?
+
+Template are stored in the game root directory under Mods/DeliverySaver
+
 ## Bugs
 
 If you find any bug during your gameplay you can open a issue on github or contact me on discord
