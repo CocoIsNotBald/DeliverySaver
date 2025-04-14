@@ -13,11 +13,11 @@ namespace DeliverySaver
     internal class IngredientData
     {
         public int baseQuantity;
-        public string name;
+        public ItemID id;
 
-        public IngredientData(string name, int baseQuantity) 
+        public IngredientData(ItemID id, int baseQuantity) 
         {
-            this.name = name;
+            this.id = id;
             this.baseQuantity = baseQuantity;
         }
     }
@@ -29,7 +29,7 @@ namespace DeliverySaver
         private int _price;
         private int _stackLimit;
         private Text _content;
-        private string _id;
+        private ItemID _id;
         private int _baseQuantity;
         private Entry _parent;
 
@@ -45,12 +45,12 @@ namespace DeliverySaver
         public int price { get => _price; }
         public int stackLimit { get => _stackLimit; }
         public string name { get => _name; }
-        public string id { get => _id; }
+        public ItemID id { get => _id; }
         public Ingredient(ListingEntry entry, Entry parent)
         {
             // Set class properties
             _entry = entry;
-            _id = entry.MatchingListing.Item.ID;
+            _id = IngredientRegister.Instance.GetItemID(entry.MatchingListing.Item.ID);
 
             _stackLimit = entry.MatchingListing.Item.StackLimit;
             _name = entry.ItemNameLabel.text;

@@ -33,9 +33,12 @@ namespace DeliverySaver
 {
     public class EntryAlreadyExistsException : Exception
     {
-        public EntryAlreadyExistsException(string message) : base(message)
-        {
-        }
+
+    }
+
+    public class EntryIsEmpty : Exception
+    {
+
     }
 
     class GameInfo
@@ -96,33 +99,22 @@ namespace DeliverySaver
             _template = new Template();
         }
 
-        public void AddEntryData(EntryData entry)
+        public void AddEntryData(EntryData entry, bool showSameEntryMessage = true)
         {
             var entryData = FindDataFromTitle(entry.title);
-            
+
             if (entryData != null)
             {
-                if(entryData.ingredients.Count == entry.ingredients.Count)
+                if (showSameEntryMessage)
                 {
-                    bool invalid = true;
-
-                    for (int i = 0; i < entryData.ingredients.Count; i++)
-                    {
-                        if (entryData.ingredients[i].name != entry.ingredients[i].name)
-                        {
-                            invalid = false;
-                            break;
-                        }
-                    }
-
-                    if(invalid)
-                    {
-                        throw new EntryAlreadyExistsException("");
-                    }
+                    throw new EntryAlreadyExistsException();
                 }
+
+                return;
             }
 
             _template.AddEntryData(entry);
+            _toSaves[GameInfo.Instance.GameName].Add(entry);
             _template.RebuildLayout();
         }
 
@@ -137,7 +129,6 @@ namespace DeliverySaver
         {
             for (int i = 0; i < _toSaves[GameInfo.Instance.GameName].Count; i++)
             {
-                Melon<Core>.Logger.Msg($"{_toSaves[GameInfo.Instance.GameName][i].title}, {oldTitle}");
                 if (_toSaves[GameInfo.Instance.GameName][i].title == oldTitle)
                 {
                     _toSaves[GameInfo.Instance.GameName][i] = entry.ToEntryData();
@@ -159,6 +150,7 @@ namespace DeliverySaver
         }
         public EntryData[] GetActualTemplateData()
         {
+            string text = Newtonsoft.Json.JsonConvert.SerializeObject(_toSaves[GameInfo.Instance.GameName].ToArray());
             return _toSaves[GameInfo.Instance.GameName].ToArray();
         }
 
@@ -166,7 +158,7 @@ namespace DeliverySaver
         {
             foreach(var pair in _toSaves)
             {
-                string path = Path.Combine(ModConfig.ModRootFile, $"template_{pair.Key}.json");
+                string path = Path.Combine(ModConfig.ModRootFile, $"template_{pair.Key}_v2.json");
                 string entries = Newtonsoft.Json.JsonConvert.SerializeObject(pair.Value);
                 File.WriteAllText(path, entries);
             }
@@ -183,14 +175,16 @@ namespace DeliverySaver
                 _toSaves.Add(gameName, new List<EntryData>());
             }
 
-            string path = Path.Combine(ModConfig.ModRootFile, $"template_{GameInfo.Instance.GameName}.json");
-            string content = File.ReadAllText(path);
-            List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
-
-            foreach (EntryData entry in entries)
+            string path = Path.Combine(ModConfig.ModRootFile, $"template_{GameInfo.Instance.GameName}_v2.json");
+            if(File.Exists(path))
             {
-                AddEntryData(entry);
-                _toSaves[GameInfo.Instance.GameName].Add(entry);
+                string content = File.ReadAllText(path);
+                List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
+
+                foreach (EntryData entry in entries)
+                {
+                    AddEntryData(entry);
+                }
             }
         }
 

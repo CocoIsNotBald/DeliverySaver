@@ -75,7 +75,7 @@ namespace DeliverySaver
                     break;
                 }
 
-                if (entry.ItemNameLabel.text == ingredients[0].name)
+                if (entry.MatchingListing.Item.ID == IngredientRegister.Instance.GetItemName(ingredients[0].id))
                 {
                     AddIngredientWithQuantity(entry, ingredients[0].baseQuantity);
                     ingredients.RemoveAt(0);
@@ -168,7 +168,7 @@ namespace DeliverySaver
 
         private void OnSingleExportClick()
         {
-            Seeder.Instance.SeedToClipboard(ToEntryData());
+            Seeder.Instance.SeedToClipboard(new List<EntryData> { ToEntryData() });
             Notification.Instance.Show("Seed copied to clipboard");
         }
 
@@ -178,7 +178,7 @@ namespace DeliverySaver
 
             foreach(Ingredient ingredient in _ingredients)
             {
-                ingredientDatas.Add(new IngredientData(ingredient.name, ingredient.baseQuantity));
+                ingredientDatas.Add(new IngredientData(ingredient.id, ingredient.baseQuantity));
             }
 
             return new EntryData(_title, _multiplier, _shopName, ingredientDatas);
@@ -238,7 +238,7 @@ namespace DeliverySaver
             {
                 // Apply the quantity of the ingredient to the shop ingredient if both name match
                 // And then clear one entry from the copied ingredients list
-                if (ingredients.Count > 0 && ingredients[0].id == entry.MatchingListing.Item.ID)
+                if (ingredients.Count > 0 && ingredients[0].name == entry.MatchingListing.Item.ID)
                 {
                     entry.QuantityInput.text = ingredients[0].QuantityMultipliedBy(_multiplier).ToString();
                     ingredients.RemoveAt(0);

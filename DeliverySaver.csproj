@@ -480,6 +480,7 @@
 		<Compile Include="src\Entry.cs" />
 		<Compile Include="src\AssetsManager.cs" />
 		<Compile Include="Core.cs" />
+		<Compile Include="src\IngredientRegister.cs" />
 		<Compile Include="src\Input.cs" />
 		<Compile Include="src\ModConfig.cs" />
 		<Compile Include="src\Notification.cs" />

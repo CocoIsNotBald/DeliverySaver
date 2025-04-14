@@ -80,34 +80,34 @@ namespace DeliverySaver
 
         public override void OnUpdate()
         {
-            try
+            if (_scene == "Main" && !_errorMode && !_loaded)
             {
-                if (_scene == "Main" && !_errorMode)
+                try
                 {
                     if (
-                        !_loaded &&
-                        DeliveryApp.Instance && 
-                        GameManager.Instance && 
+                        DeliveryApp.Instance &&
+                        GameManager.Instance &&
                         MoneyManager.Instance &&
                         GameManager.Instance.seed != 0 &&
                         DeliveryApp.Instance.appIconButton != null
                     )
                     {
+                        IngredientRegister.Instance.Synchronize();
                         TemplateManager.Instance.CreateTemplateGameObject();
-                        TemplateManager.Instance.Load();
                         InitTemplateName();
                         InitTemplateSeed();
                         AddAppSaveButton(DeliveryApp.Instance);
                         AddNotificationPanel(DeliveryApp.Instance);
+                        TemplateManager.Instance.Load();
                         _loaded = true;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                LoggerInstance.Error("There is a issue pls report it to the developer");
-                LoggerInstance.Error(ex);
-                _errorMode = true;
+                catch (Exception ex)
+                {
+                    LoggerInstance.Error("There is a issue pls report it to the developer");
+                    LoggerInstance.Error(ex);
+                    _errorMode = true;
+                }
             }
         }
 
@@ -141,21 +141,30 @@ namespace DeliverySaver
 
                 if (entry == null)
                 {
-                    throw new Exception();
+                    throw new EntryIsEmpty();
                 }
+
+                bool showEntryMessageData = entry.Count == 1 ? true : false;
 
                 foreach (EntryData entryData in entry)
                 {
-                    TemplateManager.Instance.AddEntryData(entryData);
+                    TemplateManager.Instance.AddEntryData(entryData, showEntryMessageData);
                 }
+
+                TemplateManager.Instance.template.Open();
                 return true;
+            }
+            catch (EntryIsEmpty)
+            {
+                Notification.Instance.Show("Cannot add a empty entry");
+                return false;
             }
             catch (EntryAlreadyExistsException)
             {
                 Notification.Instance.Show("Entry already registered");
                 return false;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Notification.Instance.Show("Invalid seed");
                 return false;

@@ -10,6 +10,7 @@ All the changes, fixes and improvements made to the mod.
 - Added a button to close the template input box or seed input box
 - Added a button to validate the template input box or seed input box
 ### Fixed
+- Fixed template can't load if game language is not the same
 - Fixed major issue about save by reworking the way template are handle
 - Fixed counterintuitive close behaviour for inputs ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
 - Close stream after the assets bundle are fully load ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
