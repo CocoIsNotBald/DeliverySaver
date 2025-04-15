@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.2", "Coco", null)]
+[assembly: MelonInfo(typeof(DeliverySaver.Core), "DeliverySaver", "1.0.3", "Coco", null)]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 // Phone dimensions 1200x800

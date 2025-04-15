@@ -1,7 +1,8 @@
 # DeliverySaver Changelog
 
 All the changes, fixes and improvements made to the mod.
-
+## DeliverySaver 1.0.3
+- Fixed applying template behaviour
 ## DeliverySaver 1.0.2
 ### Added/Change
 - Template are saved when you save the game ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/c9491add740423a478078be66083ab67069c65ab))

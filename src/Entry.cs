@@ -238,7 +238,7 @@ namespace DeliverySaver
             {
                 // Apply the quantity of the ingredient to the shop ingredient if both name match
                 // And then clear one entry from the copied ingredients list
-                if (ingredients.Count > 0 && ingredients[0].name == entry.MatchingListing.Item.ID)
+                if (ingredients.Count > 0 && ingredients[0].name == entry.ItemNameLabel.text)
                 {
                     entry.QuantityInput.text = ingredients[0].QuantityMultipliedBy(_multiplier).ToString();
                     ingredients.RemoveAt(0);
