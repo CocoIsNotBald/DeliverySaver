@@ -2,6 +2,7 @@
 
 All the changes, fixes and improvements made to the mod.
 ## DeliverySaver 1.0.3
+### Fixed
 - Fixed applying template behaviour
 ## DeliverySaver 1.0.2
 ### Added/Change
