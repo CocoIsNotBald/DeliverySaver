@@ -4,15 +4,15 @@ All the changes, fixes and improvements made to the mod.
 
 ## DeliverySaver 1.0.2
 ### Added/Change
-- Template are saved when you save the game
-- Better error handling
-- Template is now automatically open if you left it open when you closed the delivery app
-- Template automatically open when you enter a valid seed or a valid template name
-- Added a button to close the template input box or seed input box
-- Added a button to validate the template input box or seed input box
+- Template are saved when you save the game ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/c9491add740423a478078be66083ab67069c65ab))
+- Better error handling ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
+- Template is now automatically open if you left it open when you closed the delivery app ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
+- Template automatically open when you enter a valid seed or a valid template name ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
+- Added a button to close the template input box or seed input box ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
+- Added a button to validate the template input box or seed input box ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
 ### Fixed
-- Fixed template can't load if game language is not the same
-- Fixed major issue about save by reworking the way template are handle
+- Fixed template can't load if game language is not the same ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/2234c18fe50829046d0df97af33db47bb8288e8a))
+- Fixed major issue about save by reworking the way template are handle ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/4e6442a90687236aa94344fcdf62ea9c16211799))
 - Fixed counterintuitive close behaviour for inputs ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
 - Close stream after the assets bundle are fully load ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/e0b14d39bad33034aa66175efe8aa172fa084f9f))
 ### Know major issues
