@@ -1,6 +1,7 @@
 ﻿using Il2CppFluffyUnderware.Curvy.Generator;
 using Il2CppScheduleOne.DevUtilities;
 using Il2CppScheduleOne.Money;
+using Il2CppScheduleOne.Persistence;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
 using UnityEngine;
@@ -57,11 +58,6 @@ namespace DeliverySaver
             {
                 _loaded = false;
             }
-
-            if(_scene == "Menu")
-            {
-                TemplateManager.Instance.Save();
-            }
         }
 
         
@@ -89,9 +85,11 @@ namespace DeliverySaver
                         GameManager.Instance &&
                         MoneyManager.Instance &&
                         GameManager.Instance.seed != 0 &&
-                        DeliveryApp.Instance.appIconButton != null
+                        DeliveryApp.Instance.appIconButton != null &&
+                        SaveManager.Instance
                     )
                     {
+                        InitSaveListener();
                         IngredientRegister.Instance.Synchronize();
                         TemplateManager.Instance.CreateTemplateGameObject();
                         InitTemplateName();
@@ -109,6 +107,12 @@ namespace DeliverySaver
                     _errorMode = true;
                 }
             }
+        }
+
+        private void InitSaveListener()
+        {
+            Action callback = () => TemplateManager.Instance.Save();
+            SaveManager.Instance.onSaveStart.AddListener(callback);
         }
 
         private void InitTemplateSeed()

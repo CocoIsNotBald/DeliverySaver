@@ -4,6 +4,7 @@ All the changes, fixes and improvements made to the mod.
 
 ## DeliverySaver 1.0.2
 ### Added/Change
+- Template are saved when you save the game
 - Better error handling
 - Template is now automatically open if you left it open when you closed the delivery app
 - Template automatically open when you enter a valid seed or a valid template name

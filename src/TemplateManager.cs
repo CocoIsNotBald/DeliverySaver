@@ -28,6 +28,7 @@ using Il2CppScheduleOne;
 using static Il2CppMono.Security.X509.X520;
 using Harmony;
 using Il2CppScheduleOne.ItemFramework;
+using Il2CppScheduleOne.Persistence;
 
 namespace DeliverySaver
 {
@@ -113,8 +114,13 @@ namespace DeliverySaver
                 return;
             }
 
-            _template.AddEntryData(entry);
+            AddEntryDataBase(entry);
             _toSaves[GameInfo.Instance.GameName].Add(entry);
+        }
+
+        private void AddEntryDataBase(EntryData entry)
+        {
+            _template.AddEntryData(entry);
             _template.RebuildLayout();
         }
 
@@ -162,13 +168,20 @@ namespace DeliverySaver
                 string entries = Newtonsoft.Json.JsonConvert.SerializeObject(pair.Value);
                 File.WriteAllText(path, entries);
             }
-
-            _toSaves.Clear();
         }
 
         public void Load()
         {
             string gameName = GameInfo.Instance.GameName;
+
+            if (_toSaves.ContainsKey(gameName))
+            {
+                foreach (EntryData data in _toSaves[gameName])
+                {
+                    AddEntryDataBase(data);
+                }
+                return;
+            }
 
             if (!_toSaves.ContainsKey(gameName))
             {
@@ -176,8 +189,11 @@ namespace DeliverySaver
             }
 
             string path = Path.Combine(ModConfig.ModRootFile, $"template_{GameInfo.Instance.GameName}_v2.json");
-            if(File.Exists(path))
+
+            if (File.Exists(path))
             {
+                Melon<Core>.Logger.Msg("Loading from file");
+
                 string content = File.ReadAllText(path);
                 List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
 
