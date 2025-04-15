@@ -192,8 +192,6 @@ namespace DeliverySaver
 
             if (File.Exists(path))
             {
-                Melon<Core>.Logger.Msg("Loading from file");
-
                 string content = File.ReadAllText(path);
                 List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
 
