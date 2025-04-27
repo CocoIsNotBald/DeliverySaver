@@ -1,6 +1,19 @@
 # DeliverySaver Changelog
 
 All the changes, fixes and improvements made to the mod.
+## DeliverySaver 1.1.0
+### Added
+- Prompt when multiple entries match with multiple already registered entry. When multiple entries. A prompt appear with these actions
+	- Cancel
+	- Cancel all
+	- Overwrite
+	- Overwrite all
+- Prompt when a entry match with a already registered entry. When two entry match. A prompt appear with these actions
+	- Cancel
+	- Overwrite
+### Fixed
+- Prevent saving template if there is a bug report (exception) in the console
+- Reloading game now reset the error mod state. Which mean that if there is a bug report in the console, you do not need to restart the game to get rid of it
 ## DeliverySaver 1.0.3
 ### Fixed
 - Fixed applying template behaviour

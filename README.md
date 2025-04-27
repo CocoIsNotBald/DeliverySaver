@@ -34,3 +34,18 @@ You can contact me on discord: `@coco_not_bald`
 - [Unity Asset Bundle](https://docs.unity3d.com/Manual/AssetBundlesIntro.html)
 - [Font awesome upload icon](https://iconduck.com/icons/22522/upload)
 - [Icon generator](https://icon.kitchen/i/H4sIAAAAAAAAAzWQTWvDMAyG%2F4t2zWHrNhi5jTLGzuttjKLEsmuq2K4%2FUkrpf6%2BUtghs%2FPiV9EpnmJEbFejPYDDvNzuaCHqLXKgD69bsE%2Baq34XkAkMWG1fowI8xCJgotG1MFOCiCV%2FW0lilHhDTjJVEObjfHSYpC%2BXQfB75BteRYxb49Go0FrY5LTqX0XgK2mZw34%2BHmBg150WTVqghggWtFH08awjC4KRH%2F%2FauljxTQB1KvLOfKZ8%2BU%2FpR8x1UHdfc5xXxFE1j3caf1DA5enXlY5HzSAP8X67XuaF3MAEAAA%3D%3D)
+
+## Roadmap
+
+### 1.2.0 (Can change)
+- [ ] Add a way to favorize some entries
+### 1.1.0
+- [x] Add a prompt when multiple entry are the same
+- [x] Add a prompt when two entry are the same
+
+## TODO
+
+### 1.1.0
+- Need to think of a more clear and appropriate message for multiple entry prompt
+- Better error handling when exception occurs on "OnSeedEnter" function
+- Rework the way template are save when exception occurs

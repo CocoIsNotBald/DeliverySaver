@@ -22,6 +22,8 @@ namespace DeliverySaver
         private bool _isOpen;
         private bool _deliveryAppWasEnabled;
         private Animator _animator;
+        private bool _rebuildLayout = false;
+        private float _timer = 0.0f;
 
         private List<Entry> _entries = new List<Entry>();
         private Transform _container;
@@ -74,11 +76,27 @@ namespace DeliverySaver
             Notification.Instance.Show("Template seed copied to clipboard");
         }
 
-        private void RebuildEveryLayout()
+        public void RebuildEveryLayout()
         {
             foreach (var entry in _entries)
             {
-                GUIUtils.RebuildLayout(entry.gameObject.GetComponent<VerticalLayoutGroup>());
+                GUIUtils.MarkRebuildLayout(entry.gameObject.GetComponent<VerticalLayoutGroup>());
+            }
+        }
+
+        public void OnUpdate()
+        {
+            if(_rebuildLayout && _timer <= 0)
+            {
+                GUIUtils.RebuildLayout(_vls);
+                _rebuildLayout = false;
+                _timer = 0;
+            }
+
+            if(_timer > 0)
+            {
+                _timer -= Time.deltaTime;
+
             }
         }
 
@@ -109,7 +127,8 @@ namespace DeliverySaver
 
         public void RebuildLayout()
         {
-            GUIUtils.RebuildLayout(_vls);
+            _timer = Time.deltaTime;
+            _rebuildLayout = true;
         }
 
         internal void Open()
@@ -118,6 +137,40 @@ namespace DeliverySaver
             {
                 _openButton.onClick.Invoke();
             }
+        }
+
+        internal void Close()
+        {
+            if(isOpen)
+            {
+                _openButton.onClick.Invoke();
+            }
+        }
+
+        public void SetEntry(Entry newEntry)
+        {
+            int index = _entries.IndexOf(newEntry);
+
+            if (index != -1)
+            {
+                _entries[index] = newEntry;
+                return;
+            }
+
+            throw new Exception($"Entry {newEntry.title} has not been found in template");
+        }
+
+        public void SetEntryData(EntryData newEntryData)
+        {
+            int index = _entries.FindIndex(e => e.title == newEntryData.title);
+
+            if (index != -1)
+            {
+                _entries[index].SetDataFromEntryData(newEntryData);
+                return;
+            }
+
+            throw new Exception($"EntryData {newEntryData.title} has not been found in template");
         }
     }
 

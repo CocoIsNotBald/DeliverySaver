@@ -1,4 +1,5 @@
-﻿using Il2CppScheduleOne.UI.Phone.Delivery;
+﻿using Il2CppFluffyUnderware.DevTools.Extensions;
+using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
 using System;
 using System.Collections.Generic;
@@ -20,18 +21,28 @@ namespace DeliverySaver
             this.id = id;
             this.baseQuantity = baseQuantity;
         }
+
+        public static IngredientData FromListingEntry(ListingEntry entry)
+        {
+            return new IngredientData(
+                IngredientRegister.Instance.GetItemID(entry.MatchingListing.Item.ID),
+                int.Parse(entry.QuantityInput.text)
+            );
+        }
     }
 
     internal class Ingredient
     {
-        private ListingEntry _entry;
         private string _name;
         private int _price;
         private int _stackLimit;
-        private Text _content;
         private ItemID _id;
         private int _baseQuantity;
         private Entry _parent;
+
+        // All gameobject
+        private Text _content;
+        private GameObject _root;
 
         public int baseQuantity
         {
@@ -49,7 +60,6 @@ namespace DeliverySaver
         public Ingredient(ListingEntry entry, Entry parent)
         {
             // Set class properties
-            _entry = entry;
             _id = IngredientRegister.Instance.GetItemID(entry.MatchingListing.Item.ID);
 
             _stackLimit = entry.MatchingListing.Item.StackLimit;
@@ -61,15 +71,15 @@ namespace DeliverySaver
             _parent = parent;
 
             // Set the component to be inside of the entry
-            GameObject componentGO = AssetsManager.Instance.Instantiate("Component");
-            componentGO.transform.SetParent(parent.gameObject.transform.Find("Content"), false);
+            _root = AssetsManager.Instance.Instantiate("Component");
+            _root.transform.SetParent(parent.gameObject.transform.Find("Content"), false);
 
             // Set the image of the component
-            Transform imageGO = componentGO.transform.Find("Image");
+            Transform imageGO = _root.transform.Find("Image");
             imageGO.GetComponent<RawImage>().texture = entry.Icon.mainTexture;
 
             // Set the title of the component
-            Transform titleGO = componentGO.transform.Find("Content");
+            Transform titleGO = _root.transform.Find("Content");
 
             _content = titleGO.GetComponent<Text>();
             _content.text = $"{entry.QuantityInput.text}x {_name}";
@@ -84,6 +94,11 @@ namespace DeliverySaver
         {
             int totalQuantity = QuantityMultipliedBy(multiplier);
             _content.text = $"{totalQuantity}x {_name}";
+        }
+
+        public void Destroy()
+        {
+            _root.Destroy();
         }
     }
 }

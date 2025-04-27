@@ -1,7 +1,10 @@
-﻿using Il2CppScheduleOne.Money;
+﻿using HarmonyLib;
+using Il2CppScheduleOne.Money;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +12,20 @@ using static Il2CppMono.Security.X509.X520;
 
 namespace DeliverySaver
 {
-    internal class EntryData
+    internal class EntryDataComparer : IEqualityComparer<EntryData>
+    {
+        public bool Equals(EntryData x, EntryData y)
+        {
+            return x.Equals(y);
+        }
+
+        public int GetHashCode([DisallowNull] EntryData obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
+
+    internal class EntryData : IEquatable<EntryData>
     {
         public string title;
         public float multiplier;
@@ -25,6 +41,41 @@ namespace DeliverySaver
             this.multiplier = multiplier;
             _shopName = shopName;
             _ingredients = ingredients;
+        }
+
+        public static EntryData FromDeliveryShop(string title, float multiplier,  DeliveryShop shop)
+        {
+            List<IngredientData> ingredientDatas = new List<IngredientData>();
+
+            foreach (ListingEntry component in shop.listingEntries)
+            {
+                if (component.QuantityInput.text != "0")
+                {
+                    ingredientDatas.Add(IngredientData.FromListingEntry(component));
+                }
+            }
+
+            return new EntryData(title, multiplier, shop.name, ingredientDatas);
+        }
+
+        public bool Equals(EntryData other)
+        {
+            return title == other.title;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.title.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is EntryData)
+            {
+                return Equals((EntryData)obj);
+            }
+
+            return base.Equals(obj);
         }
     }
 
@@ -45,6 +96,9 @@ namespace DeliverySaver
         private GameObject _insufficientBalance;
         private string _shopName;
         private InputUI _multiplyInputUI;
+        private Template _parent;
+        private Image _headerImage;
+        private Text _shopGo;
 
         public string title => _title;
         public string shopName => _shopName;
@@ -55,6 +109,7 @@ namespace DeliverySaver
             set
             {
                 _multiplier = value;
+                _multiplyInputUI.InputField.text = _multiplier.ToString().Replace(",", ".");
                 UpdateIngredientWithMultiplier();
             }
         }
@@ -66,28 +121,15 @@ namespace DeliverySaver
             DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
             Init(data.title, shop, parent.templateContent);
 
-            List<IngredientData> ingredients = new List<IngredientData>(data.ingredients);
+            AddIngredientFromEntryData(data);
 
-            foreach (ListingEntry entry in shop.listingEntries)
-            {
-                if (ingredients.Count == 0)
-                {
-                    break;
-                }
-
-                if (entry.MatchingListing.Item.ID == IngredientRegister.Instance.GetItemName(ingredients[0].id))
-                {
-                    AddIngredientWithQuantity(entry, ingredients[0].baseQuantity);
-                    ingredients.RemoveAt(0);
-                }
-            }
-
-            _multiplyInputUI.InputField.text = data.multiplier.ToString();
-            this.multiplier = data.multiplier;
+            multiplier = data.multiplier;
         }
 
         public Entry(string title, DeliveryShop shop, Template parent)
         {
+            _parent = parent;
+
             Init(title, shop, parent.templateContent);
 
             foreach (ListingEntry component in _shop.listingEntries)
@@ -98,33 +140,27 @@ namespace DeliverySaver
                 }
             }
 
-            _multiplyInputUI.InputField.text = "1";
-            this.multiplier = 1.0f;
+            multiplier = 1.0f;
         }
 
         private void Init(string title, DeliveryShop shop, Transform root)
         {
-            _title = title;
             _gameObject = AssetsManager.Instance.Instantiate("Entry");
             _gameObject.transform.SetParent(root, false);
-            _shop = shop;
-            _shopName = shop.name;
+
+            // Get the text component from the "Title" gameobject and keep it as a private variable to be reusable 
+            _textTitle = _gameObject.transform.Find("Head/Header/Title").GetComponent<Text>();
+
+            // Get the image component from the "Background" gameobject and keep it as a private variable to be reusable
+            _headerImage = _gameObject.transform.Find("Head/Background").GetComponent<Image>();
+
+            // Get the text component from the "ShopName" gameobject and keep it as a private variable to be reusable
+            _shopGo = _gameObject.transform.Find("Head/ShopName").GetComponent<Text>();
+
+            Set(title, shop);
 
             Action callback = () => ApplyEntryToShop();
             _gameObject.GetComponent<Button>().onClick.AddListener(callback);
-
-            // Set the title to be display on the entry
-            Transform titleGo = _gameObject.transform.Find("Head/Header/Title");
-            _textTitle = titleGo.GetComponent<Text>();
-            _textTitle.text = title;
-
-            // Set the color of the header with the corresponding shop color
-            Transform headerImage = _gameObject.transform.Find("Head/Background");
-            headerImage.GetComponent<Image>().color = shop.HeaderImage.color;
-
-            // Set the shop name to be display on the entry
-            Transform shopGo = _gameObject.transform.Find("Head/ShopName");
-            shopGo.GetComponent<Text>().text = shop.name;
 
             // Text edit to change the name of the entry
             Transform titleInput = _gameObject.transform.Find("Head/Header/ChangeNameInput");
@@ -133,7 +169,7 @@ namespace DeliverySaver
 
             // When the title of the entry is click, make it editable
             Action onTitleEdit = () => OnTitleEdit();
-            titleGo.GetComponent<Button>().onClick.AddListener(onTitleEdit);
+            _gameObject.transform.Find("Head/Header/Title").GetComponent<Button>().onClick.AddListener(onTitleEdit);
 
             // Get the close button and apply the close behaviour
             Transform closeButton = _gameObject.transform.Find("Head/Header/CloseButton");
@@ -153,7 +189,6 @@ namespace DeliverySaver
             _multiplyInputUI = new InputUI(multiplierInput.GetComponent<InputField>());
 
             _multiplyInputUI.OnSubmit += HandleMultiplicationInput;
-            _multiplyInputUI.InputField.text = multiplier.ToString().Replace(",", ".");
             _multiplyInputUI.clearAfterSubmit = false;
 
             // Get the order is too large label from the entry game object
@@ -164,6 +199,42 @@ namespace DeliverySaver
 
             // Get the total cost label from the entry game object
             _price = _gameObject.transform.Find("Footer2/TotalCost").GetComponent<Text>();
+        }
+
+        private void AddIngredientFromEntryData(EntryData data)
+        {
+            DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
+            List<IngredientData> ingredients = new List<IngredientData>(data.ingredients);
+
+            foreach (ListingEntry entry in shop.listingEntries)
+            {
+                if (ingredients.Count == 0)
+                {
+                    break;
+                }
+
+                if (entry.MatchingListing.Item.ID == IngredientRegister.Instance.GetItemName(ingredients[0].id))
+                {
+                    AddIngredientWithQuantity(entry, ingredients[0].baseQuantity);
+                    ingredients.RemoveAt(0);
+                }
+            }
+        }
+
+        private void Set(string title, DeliveryShop shop)
+        {
+            _title = title;
+            _shop = shop;
+            _shopName = shop.name;
+
+            // Set the title to be display on the entry
+            _textTitle.text = title;
+
+            // Set the color of the header with the corresponding shop color
+            _headerImage.GetComponent<Image>().color = shop.HeaderImage.color;
+
+            // Set the shop name to be display on the entry
+            _shopGo.text = shop.name;
         }
 
         private void OnSingleExportClick()
@@ -274,6 +345,28 @@ namespace DeliverySaver
         private void AddIngredient(ListingEntry component)
         {
             _ingredients.Add(new Ingredient(component, this));
+        }
+
+        public void SetDataFromEntryData(EntryData data)
+        {
+            DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
+
+            Set(data.title, shop);
+
+            List<IngredientData> ingredients = new List<IngredientData>(data.ingredients);
+
+            foreach (Ingredient ingredient in _ingredients) 
+            {
+                ingredient.Destroy();
+            }
+
+            _ingredients.Clear();
+
+            AddIngredientFromEntryData(data);
+
+            multiplier = data.multiplier;
+
+            TemplateManager.Instance.template.RebuildEveryLayout();
         }
 
         private bool ChangeTitle(string value)

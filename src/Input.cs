@@ -1,4 +1,5 @@
 ﻿using Il2CppScheduleOne;
+using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
 using System;
 using System.Collections.Generic;
@@ -21,15 +22,20 @@ namespace DeliverySaver
         public bool clearAfterSubmit = true;
 
         public InputField InputField => _inputField;
+        public GameObject gameObject => _parent;
 
         public InputUI(InputField field)
         {
             InitInput(field);
         }
 
-        public InputUI(GameObject parent, string inputName)
+        public InputUI(string assetName, string inputName)
         {
-            _parent = parent;
+            GameObject inputGO = AssetsManager.Instance.Instantiate(assetName);
+            inputGO.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
+            inputGO.SetActive(false);
+
+            _parent = inputGO;
 
             InitInput(_parent.transform.Find(inputName).GetComponent<InputField>());
         }

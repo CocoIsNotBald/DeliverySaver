@@ -22,7 +22,7 @@ namespace DeliverySaver
         public string name { get; }
         public string path { get; private set; }
         public AssetAccessType assetAccessType { get; }
-        public bool valid { get; private set; } = false;
+        public bool valid { get; private set; } = true;
 
         public Asset(AssetAccessType assetAccessType, string name, string path)
         {
@@ -40,8 +40,6 @@ namespace DeliverySaver
                 default:
                     throw new ArgumentOutOfRangeException(nameof(assetAccessType), assetAccessType, null);
             }
-
-            valid = true;
         }
 
         private void LoadFromFile(string path)
@@ -51,6 +49,7 @@ namespace DeliverySaver
             if (!File.Exists(this.path))
             {
                 Melon<Core>.Logger.Warning($"Cannot find asset {this.path}");
+                valid = false;
                 return;
             }
 
@@ -66,6 +65,7 @@ namespace DeliverySaver
                 if (stream == null)
                 {
                     Melon<Core>.Logger.Warning($"Cannot find asset {this.path}");
+                    valid = false;
                     return;
                 }
 
@@ -95,7 +95,14 @@ namespace DeliverySaver
         {
             if (valid)
             {
-                GameObject data = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>(name));
+                GameObject prefab = assetBundle.LoadAsset<GameObject>(name);
+
+                if(prefab == null)
+                {
+                    throw new Exception($"Asset bundle prefab {name} is null on instantiation. Please verify that {name} match the exported unity gameobject name in the editor");
+                }
+
+                GameObject data = GameObject.Instantiate(prefab);
 
                 return data;
             }

@@ -56,6 +56,7 @@ namespace DeliverySaver
 
             if(_scene != "Main")
             {
+                _errorMode = false;
                 _loaded = false;
             }
         }
@@ -65,7 +66,10 @@ namespace DeliverySaver
         {
             try
             {
-                TemplateManager.Instance.Save();
+                if(!_errorMode)
+                {
+                    TemplateManager.Instance.Save();
+                }
             }
             catch (Exception ex)
             {
@@ -76,6 +80,11 @@ namespace DeliverySaver
 
         public override void OnUpdate()
         {
+            if(_scene == "Main" && _loaded && !_errorMode)
+            {
+                TemplateManager.Instance.template.OnUpdate();
+            }
+
             if (_scene == "Main" && !_errorMode && !_loaded)
             {
                 try
@@ -117,16 +126,12 @@ namespace DeliverySaver
 
         private void InitTemplateSeed()
         {
-            GameObject templateSeed = AssetsManager.Instance.Instantiate("TemplateSeed");
-            templateSeed.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
-            templateSeed.SetActive(false);
-
-            templateSeedInput = new InputUI(templateSeed, "InputName");
+            templateSeedInput = new InputUI("TemplateSeed", "InputName");
             templateSeedInput.OnSubmit += OnSeedEnter;
 
             // Bind the button close (X) to deactivate the input and relieve player input
             Action close = () => templateSeedInput.Deactivate();
-            templateSeed.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
+            templateSeedInput.gameObject.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
    
             // When the import button is clicked, activate the prompt for entering a seed
             Transform importSeed = TemplateManager.Instance.template.gameObject.transform.Find("Mask/Content/ImportSeed");
@@ -134,7 +139,7 @@ namespace DeliverySaver
 
             // When the V button is click, submit the input
             Action action = () => templateSeedInput.InputField.SendOnSubmit();
-            templateSeed.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
+            templateSeedInput.gameObject.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
         }
 
         private bool OnSeedEnter(string seed)
@@ -148,14 +153,16 @@ namespace DeliverySaver
                     throw new EntryIsEmpty();
                 }
 
-                bool showEntryMessageData = entry.Count == 1 ? true : false;
+                bool isSingleEntry = entry.Count == 1 ? true : false;
 
-                foreach (EntryData entryData in entry)
+                if (isSingleEntry)
                 {
-                    TemplateManager.Instance.AddEntryData(entryData, showEntryMessageData);
+                    TemplateManager.Instance.AddEntryData(entry[0]);
+                } else
+                {
+                    TemplateManager.Instance.AddEntriesData(entry);
                 }
 
-                TemplateManager.Instance.template.Open();
                 return true;
             }
             catch (EntryIsEmpty)
@@ -163,13 +170,9 @@ namespace DeliverySaver
                 Notification.Instance.Show("Cannot add a empty entry");
                 return false;
             }
-            catch (EntryAlreadyExistsException)
+            catch (Exception e)
             {
-                Notification.Instance.Show("Entry already registered");
-                return false;
-            }
-            catch (Exception)
-            {
+                LoggerInstance.Error(e);
                 Notification.Instance.Show("Invalid seed");
                 return false;
             }
@@ -177,19 +180,15 @@ namespace DeliverySaver
 
         private void InitTemplateName()
         {
-            GameObject templateName = AssetsManager.Instance.Instantiate("TemplateName");
-            templateName.transform.SetParent(DeliveryApp.Instance.appContainer.transform, false);
-            templateName.SetActive(false);
-
-            templateNameInput = new InputUI(templateName, "InputName");
+            templateNameInput = new InputUI("TemplateName", "InputName");
             templateNameInput.OnSubmit += OnEntryNameValidated;
 
             Action close = () => templateNameInput.Deactivate();
-            templateName.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
+            templateNameInput.gameObject.transform.Find("Close").GetComponent<Button>().onClick.AddListener(close);
 
             // When the V button is click, submit the input
             Action action = () => templateNameInput.InputField.SendOnSubmit();
-            templateName.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
+            templateNameInput.gameObject.transform.Find("Validate").GetComponent<Button>().onClick.AddListener(action);
         }
 
         private void AddNotificationPanel(DeliveryApp app)
@@ -240,14 +239,7 @@ namespace DeliverySaver
                 return false;
             }
 
-            if (TemplateManager.Instance.IsEntryRegister(name))
-            {
-                Notification.Instance.Show("Name already taken");
-                return false;
-            }
-
             TemplateManager.Instance.AddEntry(templateNameInput.InputField.text, _deliveryShop);
-            TemplateManager.Instance.template.Open();
 
             return true;
         }

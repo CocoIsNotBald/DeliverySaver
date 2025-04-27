@@ -26,5 +26,21 @@ namespace DeliverySaver
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(hls.GetComponent<RectTransform>());
         }
+
+        public static void MarkRebuildLayout(VerticalLayoutGroup vls)
+        {
+            // Ain't no way that's working in a single call but it does now
+            LayoutRebuilder.MarkLayoutRootForRebuild(vls.GetComponent<RectTransform>());
+        }
+
+        public static void MarkRebuildLayout(GridLayoutGroup gls)
+        {
+            LayoutRebuilder.MarkLayoutRootForRebuild(gls.GetComponent<RectTransform>());
+        }
+
+        public static void MarkRebuildLayout(HorizontalLayoutGroup hls)
+        {
+            LayoutRebuilder.MarkLayoutRootForRebuild(hls.GetComponent<RectTransform>());
+        }
     }
 }
