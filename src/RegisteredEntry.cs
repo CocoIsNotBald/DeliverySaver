@@ -105,6 +105,11 @@ namespace DeliverySaver.src
 
         private string CreateMessage(EntryData entry)
         {
+            if (_entriesData.Count > 1)
+            {
+                return $"{_entriesData.Count} entries are already registered. Do you want to overwrite {entry.title} or overwrite all ?";
+            }
+
             return $"A entry with name {entry.title} is already registered.";
         }
 

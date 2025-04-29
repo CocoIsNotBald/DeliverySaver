@@ -46,6 +46,6 @@ You can contact me on discord: `@coco_not_bald`
 ## TODO
 
 ### 1.1.0
-- Need to think of a more clear and appropriate message for multiple entry prompt
 - Better error handling when exception occurs on "OnSeedEnter" function
 - Rework the way template are save when exception occurs
+- Add a way to compare entry

@@ -112,12 +112,12 @@ namespace DeliverySaver
 
         public void AddEntry(string name, DeliveryShop shop)
         {
-            _entries.Add(new Entry(name, shop, this));
+            _entries.Add(new Entry(name, shop, templateContent.transform));
         }
 
         public void AddEntryData(EntryData data)
         {
-            _entries.Add(new Entry(data, this));
+            _entries.Add(new Entry(data, templateContent.transform));
         }
 
         internal void RemoveEntry(Entry entry)

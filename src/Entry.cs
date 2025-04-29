@@ -84,7 +84,6 @@ namespace DeliverySaver
     {
         private string _title;
         private DeliveryShop _shop;
-        private AssetBundle _entry;
         private Text _price;
         private float _multiplier;
 
@@ -96,7 +95,7 @@ namespace DeliverySaver
         private GameObject _insufficientBalance;
         private string _shopName;
         private InputUI _multiplyInputUI;
-        private Template _parent;
+        private Transform _parent;
         private Image _headerImage;
         private Text _shopGo;
 
@@ -116,21 +115,19 @@ namespace DeliverySaver
 
         public GameObject gameObject { get => _gameObject; }
 
-        public Entry(EntryData data, Template parent)
+        public Entry(EntryData data, Transform parent)
         {
             DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
-            Init(data.title, shop, parent.templateContent);
+            Init(data.title, shop, parent);
 
             AddIngredientFromEntryData(data);
 
             multiplier = data.multiplier;
         }
 
-        public Entry(string title, DeliveryShop shop, Template parent)
+        public Entry(string title, DeliveryShop shop, Transform parent)
         {
-            _parent = parent;
-
-            Init(title, shop, parent.templateContent);
+            Init(title, shop, parent);
 
             foreach (ListingEntry component in _shop.listingEntries)
             {
@@ -143,10 +140,11 @@ namespace DeliverySaver
             multiplier = 1.0f;
         }
 
-        private void Init(string title, DeliveryShop shop, Transform root)
+        private void Init(string title, DeliveryShop shop, Transform parent)
         {
+            _parent = parent;
             _gameObject = AssetsManager.Instance.Instantiate("Entry");
-            _gameObject.transform.SetParent(root, false);
+            _gameObject.transform.SetParent(_parent, false);
 
             // Get the text component from the "Title" gameobject and keep it as a private variable to be reusable 
             _textTitle = _gameObject.transform.Find("Head/Header/Title").GetComponent<Text>();
