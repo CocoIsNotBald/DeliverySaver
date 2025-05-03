@@ -38,7 +38,7 @@ namespace DeliverySaver
         private int _stackLimit;
         private ItemID _id;
         private int _baseQuantity;
-        private Entry _parent;
+        private ImmutableEntry _parent;
 
         // All gameobject
         private Text _content;
@@ -57,7 +57,7 @@ namespace DeliverySaver
         public int stackLimit { get => _stackLimit; }
         public string name { get => _name; }
         public ItemID id { get => _id; }
-        public Ingredient(ListingEntry entry, Entry parent)
+        public Ingredient(ListingEntry entry, ImmutableEntry parent)
         {
             // Set class properties
             _id = IngredientRegister.Instance.GetItemID(entry.MatchingListing.Item.ID);

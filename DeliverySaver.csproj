@@ -17,6 +17,7 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp-firstpass">
@@ -465,16 +466,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\Comparer.cs"></Compile>
     <Compile Include="src\GUIUtils.cs"></Compile>
     <Compile Include="src\Ingredient.cs"></Compile>
     <Compile Include="src\Entry.cs"></Compile>
+    <Compile Include="src\ImmutableEntry.cs"></Compile>
     <Compile Include="src\AssetsManager.cs"></Compile>
     <Compile Include="Core.cs"></Compile>
     <Compile Include="src\IngredientRegister.cs"></Compile>
     <Compile Include="src\Input.cs"></Compile>
     <Compile Include="src\ModConfig.cs"></Compile>
     <Compile Include="src\Notification.cs"></Compile>
-    <Compile Include="src\RegisteredEntry.cs"></Compile>
     <Compile Include="src\Seeder.cs"></Compile>
     <Compile Include="src\TemplateManager.cs"></Compile>
     <Compile Include="src\Template.cs"></Compile>
@@ -484,11 +486,13 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="assets/signature.txt"></EmbeddedResource>
+    <EmbeddedResource Include="assets/ui/comparator"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/component"></EmbeddedResource>
+    <EmbeddedResource Include="assets/ui/entriesdiff"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/entry"></EmbeddedResource>
+    <EmbeddedResource Include="assets/ui/entrydiff"></EmbeddedResource>
+    <EmbeddedResource Include="assets/ui/immutableentry"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/notification"></EmbeddedResource>
-    <EmbeddedResource Include="assets/ui/registeredallentryprompt"></EmbeddedResource>
-    <EmbeddedResource Include="assets/ui/registeredentryprompt"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/savebutton"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/template"></EmbeddedResource>
     <EmbeddedResource Include="assets/ui/templatename"></EmbeddedResource>
@@ -496,5 +500,14 @@
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Schedule I\Mods&quot;"></Exec>
+  </Target>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="$(SolutionDir)tmbs.exe --csprojPath &quot;$(ProjectPath)&quot;"></Exec>
+  </Target>
+  <Target Name="CreateDistDir" AfterTargets="PostBuildEvent">
+    <Exec Command="IF NOT EXIST &quot;$(SolutionDir)dist&quot; MKDIR &quot;$(SolutionDir)dist&quot;"></Exec>
+  </Target>
+  <Target Name="CopyToDist" AfterTargets="CreateDistDir">
+    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(SolutionDir)dist&quot;"></Exec>
   </Target>
 </Project>

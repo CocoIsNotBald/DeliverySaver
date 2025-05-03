@@ -18,6 +18,7 @@ namespace DeliverySaver
 
         public Action<string> OnEndEdit = (_) => { };
         public Action<string> OnValueChanged = (_) => { };
+
         public Func<string, bool> OnSubmit = (_) => true;
         public bool clearAfterSubmit = true;
 
@@ -44,6 +45,11 @@ namespace DeliverySaver
         {
             _inputField = field;
 
+            Action<string> onValueChanged = (value) =>
+            {
+                OnValueChanged(value);
+            };
+
             Action<string> onEndEdit = (value) =>
             {
                 OnEndEdit(value);
@@ -66,6 +72,7 @@ namespace DeliverySaver
 
             _inputField.onEndEdit.AddListener(onEndEdit);
             _inputField.onSubmit.AddListener(onSubmit);
+            _inputField.onValueChanged.AddListener(onValueChanged);
             _inputField.onValueChange.AddListener(OnValueChanged);
         }
 

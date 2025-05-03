@@ -1,4 +1,6 @@
 ﻿using HarmonyLib;
+using Il2CppFluffyUnderware.Curvy.Generator;
+using Il2CppFluffyUnderware.DevTools.Extensions;
 using Il2CppScheduleOne.Money;
 using Il2CppScheduleOne.UI.Phone.Delivery;
 using MelonLoader;
@@ -12,19 +14,6 @@ using static Il2CppMono.Security.X509.X520;
 
 namespace DeliverySaver
 {
-    internal class EntryDataComparer : IEqualityComparer<EntryData>
-    {
-        public bool Equals(EntryData x, EntryData y)
-        {
-            return x.Equals(y);
-        }
-
-        public int GetHashCode([DisallowNull] EntryData obj)
-        {
-            return obj.GetHashCode();
-        }
-    }
-
     internal class EntryData : IEquatable<EntryData>
     {
         public string title;
@@ -80,159 +69,58 @@ namespace DeliverySaver
     }
 
     // Entry will be save and clear if the scene is not Main (Main scene = Game)
-    internal class Entry
+    internal class Entry : ImmutableEntry
     {
-        private string _title;
-        private DeliveryShop _shop;
-        private Text _price;
-        private float _multiplier;
-
-        private Text _textTitle;
         private InputUI _changeNameInput;
-        private GameObject _gameObject;
-        private List<Ingredient> _ingredients = new List<Ingredient>();
-        private GameObject _tooLarge;
-        private GameObject _insufficientBalance;
-        private string _shopName;
-        private InputUI _multiplyInputUI;
-        private Transform _parent;
-        private Image _headerImage;
-        private Text _shopGo;
+        protected override string _prefabName => "Entry";
 
-        public string title => _title;
-        public string shopName => _shopName;
-
-        public float multiplier
+        public Entry(EntryData data, Transform parent) : base(data, parent)
         {
-            get { return _multiplier; }
-            set
-            {
-                _multiplier = value;
-                _multiplyInputUI.InputField.text = _multiplier.ToString().Replace(",", ".");
-                UpdateIngredientWithMultiplier();
-            }
+
         }
 
-        public GameObject gameObject { get => _gameObject; }
-
-        public Entry(EntryData data, Transform parent)
+        public Entry(string title, DeliveryShop shop, Transform parent) : base(title, shop, parent)
         {
-            DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
-            Init(data.title, shop, parent);
-
-            AddIngredientFromEntryData(data);
-
-            multiplier = data.multiplier;
         }
 
-        public Entry(string title, DeliveryShop shop, Transform parent)
+        protected override void Init(string title, DeliveryShop shop, Transform parent)
         {
-            Init(title, shop, parent);
-
-            foreach (ListingEntry component in _shop.listingEntries)
-            {
-                if (component.QuantityInput.text != "0")
-                {
-                    AddIngredient(component);
-                }
-            }
-
-            multiplier = 1.0f;
-        }
-
-        private void Init(string title, DeliveryShop shop, Transform parent)
-        {
-            _parent = parent;
-            _gameObject = AssetsManager.Instance.Instantiate("Entry");
-            _gameObject.transform.SetParent(_parent, false);
-
-            // Get the text component from the "Title" gameobject and keep it as a private variable to be reusable 
-            _textTitle = _gameObject.transform.Find("Head/Header/Title").GetComponent<Text>();
-
-            // Get the image component from the "Background" gameobject and keep it as a private variable to be reusable
-            _headerImage = _gameObject.transform.Find("Head/Background").GetComponent<Image>();
-
-            // Get the text component from the "ShopName" gameobject and keep it as a private variable to be reusable
-            _shopGo = _gameObject.transform.Find("Head/ShopName").GetComponent<Text>();
-
-            Set(title, shop);
+            base.Init(title, shop, parent);
 
             Action callback = () => ApplyEntryToShop();
-            _gameObject.GetComponent<Button>().onClick.AddListener(callback);
+            gameObject.GetComponent<Button>().onClick.AddListener(callback);
 
             // Text edit to change the name of the entry
-            Transform titleInput = _gameObject.transform.Find("Head/Header/ChangeNameInput");
+            Transform titleInput = gameObject.transform.Find("Head/Header/ChangeNameInput");
             _changeNameInput = new InputUI(titleInput.GetComponent<InputField>());
             _changeNameInput.OnSubmit += ChangeTitle;
 
             // When the title of the entry is click, make it editable
             Action onTitleEdit = () => OnTitleEdit();
-            _gameObject.transform.Find("Head/Header/Title").GetComponent<Button>().onClick.AddListener(onTitleEdit);
+            gameObject.transform.Find("Head/Header/Title").GetComponent<Button>().onClick.AddListener(onTitleEdit);
 
             // Get the close button and apply the close behaviour
-            Transform closeButton = _gameObject.transform.Find("Head/Header/CloseButton");
+            Transform closeButton = gameObject.transform.Find("Head/Header/CloseButton");
             Action close = () => { Close(); };
             closeButton.GetComponent<Button>().onClick.AddListener(close);
 
             // Get and define the umpload behaviour
             // When click create a seed in base64 with this entity data
-            Transform uploadIcon = _gameObject.transform.Find("Head/Header/UploadIcon");
+            Transform uploadIcon = gameObject.transform.Find("Head/Header/UploadIcon");
 
             Action action = () => { OnSingleExportClick(); };
             uploadIcon.GetComponent<Button>().onClick.AddListener(action);
 
-            // Get the multiplier input and create a input ui for ease of use
-            // Also replace the "," decimal operator from the ToString() function to a dot
-            Transform multiplierInput = _gameObject.transform.Find("Footer/Multiplier/MultiplierInput");
-            _multiplyInputUI = new InputUI(multiplierInput.GetComponent<InputField>());
-
+            _multiplyInputUI.OnEndEdit += HandleMultiplicationInputBase;
             _multiplyInputUI.OnSubmit += HandleMultiplicationInput;
+            // Don't clear the input after submit
             _multiplyInputUI.clearAfterSubmit = false;
-
-            // Get the order is too large label from the entry game object
-            _tooLarge = _gameObject.transform.Find("Footer/TooLarge").gameObject;
-
-            // Get the insufficient balance label from the entry game object
-            _insufficientBalance = _gameObject.transform.Find("Footer2/InsufficientBalance").gameObject;
-
-            // Get the total cost label from the entry game object
-            _price = _gameObject.transform.Find("Footer2/TotalCost").GetComponent<Text>();
         }
 
-        private void AddIngredientFromEntryData(EntryData data)
+        private void OnTitleEdit()
         {
-            DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
-            List<IngredientData> ingredients = new List<IngredientData>(data.ingredients);
-
-            foreach (ListingEntry entry in shop.listingEntries)
-            {
-                if (ingredients.Count == 0)
-                {
-                    break;
-                }
-
-                if (entry.MatchingListing.Item.ID == IngredientRegister.Instance.GetItemName(ingredients[0].id))
-                {
-                    AddIngredientWithQuantity(entry, ingredients[0].baseQuantity);
-                    ingredients.RemoveAt(0);
-                }
-            }
-        }
-
-        private void Set(string title, DeliveryShop shop)
-        {
-            _title = title;
-            _shop = shop;
-            _shopName = shop.name;
-
-            // Set the title to be display on the entry
-            _textTitle.text = title;
-
-            // Set the color of the header with the corresponding shop color
-            _headerImage.GetComponent<Image>().color = shop.HeaderImage.color;
-
-            // Set the shop name to be display on the entry
-            _shopGo.text = shop.name;
+            _changeNameInput.InputField.text = _title;
+            _changeNameInput.Activate();
         }
 
         private void OnSingleExportClick()
@@ -241,59 +129,36 @@ namespace DeliverySaver
             Notification.Instance.Show("Seed copied to clipboard");
         }
 
-        public EntryData ToEntryData()
+        private void HandleMultiplicationInputBase(string value)
         {
-            List<IngredientData> ingredientDatas = new List<IngredientData>();
-
-            foreach(Ingredient ingredient in _ingredients)
+            try
             {
-                ingredientDatas.Add(new IngredientData(ingredient.id, ingredient.baseQuantity));
+                float multiplierValue = float.Parse(value.Replace(".", ","));
+
+                multiplier = multiplierValue;
+
+                TemplateManager.Instance.UpdateEntry(this);
             }
-
-            return new EntryData(_title, _multiplier, _shopName, ingredientDatas);
-        }
-
-        private void UpdateIngredientWithMultiplier()
-        {
-            int totalCost = 0;
-            int totalStack = 0;
-
-            foreach (Ingredient ingredient in _ingredients)
+            catch (FormatException)
             {
-                int quantity = ingredient.QuantityMultipliedBy(_multiplier);
-                ingredient.RebuildContent(_multiplier);
-                totalCost += ingredient.price * quantity;
-                totalStack += (int)Math.Ceiling((double)quantity / ingredient.stackLimit);
+                Notification.Instance.Show("Invalid multiplier value");
+                UpdateMultiplierInput();
             }
-
-            if (totalStack > 16)
+            catch (ArgumentNullException)
             {
-                _tooLarge.SetActive(true);
+                Notification.Instance.Show("Multiplier value is empty");
+                UpdateMultiplierInput();
             }
-            else
+            catch (OverflowException)
             {
-                _tooLarge.SetActive(false);
+                Notification.Instance.Show("Multiplier value is too large");
+                UpdateMultiplierInput();
             }
-
-            if (totalCost > MoneyManager.Instance.onlineBalance)
-            {
-                _insufficientBalance.SetActive(true);
-            }
-            else
-            {
-                _insufficientBalance.SetActive(false);
-            }
-
-            _price.text = $"Total cost: ${(200 + totalCost).ToString("n0", CultureInfo.InvariantCulture)}";
         }
 
         private bool HandleMultiplicationInput(string value)
         {
-            float multiplierValue = float.Parse(value.Replace(".", ","));
-
-            multiplier = multiplierValue;
-
-            TemplateManager.Instance.UpdateEntry(this);
+            HandleMultiplicationInputBase(value);
 
             return true;
         }
@@ -324,47 +189,8 @@ namespace DeliverySaver
 
         private void Close()
         {
-            GameObject.Destroy(_gameObject);
+            Destroy();
             TemplateManager.Instance.RemoveEntry(this);
-        }
-
-        private void OnTitleEdit()
-        {
-            _changeNameInput.InputField.text = _title;
-            _changeNameInput.Activate();
-        }
-
-        private void AddIngredientWithQuantity(ListingEntry entry, int quantity)
-        {
-            _ingredients.Add(new Ingredient(entry, this));
-            _ingredients.Last().baseQuantity = quantity;
-        }
-
-        private void AddIngredient(ListingEntry component)
-        {
-            _ingredients.Add(new Ingredient(component, this));
-        }
-
-        public void SetDataFromEntryData(EntryData data)
-        {
-            DeliveryShop shop = DeliveryApp.Instance.GetShop(data.shopName);
-
-            Set(data.title, shop);
-
-            List<IngredientData> ingredients = new List<IngredientData>(data.ingredients);
-
-            foreach (Ingredient ingredient in _ingredients) 
-            {
-                ingredient.Destroy();
-            }
-
-            _ingredients.Clear();
-
-            AddIngredientFromEntryData(data);
-
-            multiplier = data.multiplier;
-
-            TemplateManager.Instance.template.RebuildEveryLayout();
         }
 
         private bool ChangeTitle(string value)

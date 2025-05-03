@@ -41,8 +41,14 @@ namespace DeliverySaver
 
         public T Decode<T>(string encoded) where T : class
         {
+            if (encoded == "")
+            {
+                throw new ArgumentNullException();
+            }
+
             byte[] base64encoded = Convert.FromBase64String(encoded);
             string content = Encoding.UTF8.GetString(base64encoded);
+
 
             if (!content.StartsWith(signature))
             {

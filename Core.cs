@@ -42,6 +42,7 @@ namespace DeliverySaver
                 AssetsManager.Instance.LoadAssetBundleFromResources("TemplateName", "ui.templatename");
                 AssetsManager.Instance.LoadAssetBundleFromResources("Notification", "ui.notification");
                 AssetsManager.Instance.LoadAssetBundleFromResources("TemplateSeed", "ui.templateseed");
+                Comparator.Instance.Init();
             }
             catch (Exception ex)
             {
@@ -66,10 +67,7 @@ namespace DeliverySaver
         {
             try
             {
-                if(!_errorMode)
-                {
-                    TemplateManager.Instance.Save();
-                }
+                TemplateManager.Instance.Save();
             }
             catch (Exception ex)
             {
@@ -106,6 +104,7 @@ namespace DeliverySaver
                         AddAppSaveButton(DeliveryApp.Instance);
                         AddNotificationPanel(DeliveryApp.Instance);
                         TemplateManager.Instance.Load();
+                        Comparator.Instance.Instantiate();
                         _loaded = true;
                     }
                 }
@@ -158,12 +157,28 @@ namespace DeliverySaver
                 if (isSingleEntry)
                 {
                     TemplateManager.Instance.AddEntryData(entry[0]);
-                } else
+                }
+                else
                 {
                     TemplateManager.Instance.AddEntriesData(entry);
                 }
 
                 return true;
+            }
+            catch (InvalidCastException)
+            {
+                Notification.Instance.Show("Invalid data from seed");
+                return false;
+            }
+            catch (ArgumentNullException)
+            {
+                Notification.Instance.Show("Seed is empty");
+                return false;
+            }
+            catch (OverflowException)
+            {
+                Notification.Instance.Show("Seed is too large");
+                return false;
             }
             catch (EntryIsEmpty)
             {

@@ -29,10 +29,15 @@ using static Il2CppMono.Security.X509.X520;
 using Harmony;
 using Il2CppScheduleOne.ItemFramework;
 using Il2CppScheduleOne.Persistence;
-using DeliverySaver.src;
 
 namespace DeliverySaver
 {
+    enum SaveState
+    {
+        Save,
+        PreventSave,
+    }
+
     public class EntryAlreadyExistsException : Exception
     {
 
@@ -70,11 +75,21 @@ namespace DeliverySaver
         }
     }
 
+    internal class SaveCache
+    {
+        public SaveState state = SaveState.Save;
+        public List<EntryData> entries = new List<EntryData>();
+
+        public List<EntryData> ToJson()
+        {
+            return entries;
+        }
+    }
+
     internal class TemplateManager
     {
-        private Dictionary<string, List<EntryData>> _toSaves = new Dictionary<string, List<EntryData>>();
+        private Dictionary<string, SaveCache> _toSaves = new Dictionary<string, SaveCache>();
         private Template _template;
-        private RegisteredEntry _registeredEntry;
         private static TemplateManager _instance;
         public static TemplateManager Instance
         {
@@ -94,15 +109,13 @@ namespace DeliverySaver
         {
             AssetsManager.Instance.LoadAssetBundleFromResources("Template", "ui.template");
             AssetsManager.Instance.LoadAssetBundleFromResources("Entry", "ui.entry");
+            AssetsManager.Instance.LoadAssetBundleFromResources("ImmutableEntry", "ui.immutableentry");
             AssetsManager.Instance.LoadAssetBundleFromResources("Component", "ui.component");
-            AssetsManager.Instance.LoadAssetBundleFromResources("RegisteredEntryPrompt", "ui.registeredentryprompt");
-            AssetsManager.Instance.LoadAssetBundleFromResources("RegisteredAllEntryPrompt", "ui.registeredallentryprompt");
         }
 
         public void CreateTemplateGameObject()
         {
             _template = new Template();
-            _registeredEntry = new RegisteredEntry("RegisteredEntryPrompt", "RegisteredAllEntryPrompt");
         }
 
         public bool AddEntryData(EntryData entry)
@@ -111,12 +124,12 @@ namespace DeliverySaver
 
             if (entryData != null)
             {
-                _registeredEntry.Show(entry);
+                Comparator.Instance.Compare(entry, entryData);
                 return false;
             }
 
             AddEntryDataBase(entry);
-            _toSaves[GameInfo.Instance.GameName].Add(entry);
+            _toSaves[GameInfo.Instance.GameName].entries.Add(entry);
             return true;
         }
 
@@ -129,7 +142,8 @@ namespace DeliverySaver
 
         public void AddEntriesData(List<EntryData> entries)
         {
-            var sames = entries.Intersect(_toSaves[GameInfo.Instance.GameName]);
+            var templateArray = _toSaves[GameInfo.Instance.GameName].entries;
+            var sames = entries.Intersect(templateArray).ToList();
             var uniques = entries.Except(sames).ToList();
 
             foreach (var entry in uniques)
@@ -137,7 +151,7 @@ namespace DeliverySaver
                 AddEntryData(entry);
             }
 
-            _registeredEntry.Show(sames);
+            Comparator.Instance.Compare(sames, templateArray.Intersect(entries).ToList());
         }
 
         public bool AddEntry(string name, DeliveryShop shop)
@@ -146,19 +160,19 @@ namespace DeliverySaver
 
             if (entryData != null)
             {
-                _registeredEntry.Show(EntryData.FromDeliveryShop(name, entryData.multiplier, shop));
+                Comparator.Instance.Compare(EntryData.FromDeliveryShop(name, entryData.multiplier, shop), entryData);
                 return false;
             }
 
             _template.AddEntry(name, shop);
-            _toSaves[GameInfo.Instance.GameName].Add(_template.GetLastEntry().ToEntryData());
+            _toSaves[GameInfo.Instance.GameName].entries.Add(_template.GetLastEntry().ToEntryData());
             _template.RebuildLayout();
             _template.Open();
 
             return true;
         }
 
-        public void SetEntry(Entry newEntry)
+        public void SetEntry(ImmutableEntry newEntry)
         {
             EntryData newEntryData = newEntry.ToEntryData();
             SetEntryData(newEntryData);
@@ -166,11 +180,11 @@ namespace DeliverySaver
 
         public void SetEntryData(EntryData newEntryData)
         {
-            int index = _toSaves[GameInfo.Instance.GameName].FindIndex(ed => ed.title == newEntryData.title);
+            int index = _toSaves[GameInfo.Instance.GameName].entries.FindIndex(ed => ed.title == newEntryData.title);
 
             if (index != -1)
             {
-                _toSaves[GameInfo.Instance.GameName][index] = newEntryData;
+                _toSaves[GameInfo.Instance.GameName].entries[index] = newEntryData;
                 _template.SetEntryData(newEntryData);
                 _template.RebuildLayout();
                 return;
@@ -179,42 +193,44 @@ namespace DeliverySaver
             throw new Exception($"EntryData {newEntryData.title} has not been found");
         }
 
-        public void UpdateEntryTitle(string oldTitle, Entry entry)
+        public void UpdateEntryTitle(string oldTitle, ImmutableEntry entry)
         {
-            for (int i = 0; i < _toSaves[GameInfo.Instance.GameName].Count; i++)
+            for (int i = 0; i < _toSaves[GameInfo.Instance.GameName].entries.Count; i++)
             {
-                if (_toSaves[GameInfo.Instance.GameName][i].title == oldTitle)
+                if (_toSaves[GameInfo.Instance.GameName].entries[i].title == oldTitle)
                 {
-                    _toSaves[GameInfo.Instance.GameName][i] = entry.ToEntryData();
+                    _toSaves[GameInfo.Instance.GameName].entries[i] = entry.ToEntryData();
                     break;
                 }
             }
         }
 
-        public void UpdateEntry(Entry entry)
+        public void UpdateEntry(ImmutableEntry entry)
         {
-            for (int i = 0; i < _toSaves[GameInfo.Instance.GameName].Count; i++)
+            for (int i = 0; i < _toSaves[GameInfo.Instance.GameName].entries.Count; i++)
             {
-                if (_toSaves[GameInfo.Instance.GameName][i].title == entry.title)
+                if (_toSaves[GameInfo.Instance.GameName].entries[i].title == entry.title)
                 {
-                    _toSaves[GameInfo.Instance.GameName][i] = entry.ToEntryData();
+                    _toSaves[GameInfo.Instance.GameName].entries[i] = entry.ToEntryData();
                     break;
                 }
             }
         }
         public EntryData[] GetActualTemplateData()
         {
-            string text = Newtonsoft.Json.JsonConvert.SerializeObject(_toSaves[GameInfo.Instance.GameName].ToArray());
-            return _toSaves[GameInfo.Instance.GameName].ToArray();
+            return _toSaves[GameInfo.Instance.GameName].entries.ToArray();
         }
 
         public void Save()
         {
             foreach(var pair in _toSaves)
             {
-                string path = Path.Combine(ModConfig.ModRootFile, $"template_{pair.Key}_v2.json");
-                string entries = Newtonsoft.Json.JsonConvert.SerializeObject(pair.Value);
-                File.WriteAllText(path, entries);
+                if(pair.Value.state == SaveState.Save)
+                {
+                    string path = Path.Combine(ModConfig.ModRootFile, $"template_{pair.Key}_v2.json");
+                    string entries = Newtonsoft.Json.JsonConvert.SerializeObject(pair.Value.ToJson());
+                    File.WriteAllText(path, entries);
+                }
             }
         }
 
@@ -224,7 +240,7 @@ namespace DeliverySaver
 
             if (_toSaves.ContainsKey(gameName))
             {
-                foreach (EntryData data in _toSaves[gameName])
+                foreach (EntryData data in _toSaves[gameName].entries)
                 {
                     AddEntryDataBase(data);
                 }
@@ -233,44 +249,55 @@ namespace DeliverySaver
 
             if (!_toSaves.ContainsKey(gameName))
             {
-                _toSaves.Add(gameName, new List<EntryData>());
+                _toSaves.Add(gameName, new SaveCache
+                {
+                    entries = new List<EntryData>(),
+                    state = SaveState.Save
+                });
             }
 
             string path = Path.Combine(ModConfig.ModRootFile, $"template_{GameInfo.Instance.GameName}_v2.json");
 
             if (File.Exists(path))
             {
-                string content = File.ReadAllText(path);
-                List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
-
-                foreach (EntryData entry in entries)
+                try
                 {
-                    AddEntryData(entry);
+                    string content = File.ReadAllText(path);
+                    List<EntryData> entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<EntryData>>(content);
+
+                    foreach (EntryData entry in entries)
+                    {
+                        AddEntryData(entry);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _toSaves[GameInfo.Instance.GameName].state = SaveState.PreventSave;
+                    throw new Exception(e.Message);
                 }
             }
-
             _template.Close();
         }
 
-        internal void RemoveEntry(Entry entry)
+        internal void RemoveEntry(ImmutableEntry entry)
         {
             _template.RemoveEntry(entry);
-            _toSaves[GameInfo.Instance.GameName].Remove(FindDataFromEntry(entry));
+            _toSaves[GameInfo.Instance.GameName].entries.Remove(FindDataFromEntry(entry));
         }
 
-        private EntryData FindDataFromEntry(Entry entry)
+        private EntryData FindDataFromEntry(ImmutableEntry entry)
         {
-            return _toSaves[GameInfo.Instance.GameName].Find(e => e.title == entry.title);
+            return _toSaves[GameInfo.Instance.GameName].entries.Find(e => e.title == entry.title);
         }
 
         private EntryData FindDataFromTitle(string title)
         {
-            return _toSaves[GameInfo.Instance.GameName].Find(e => e.title == title);
+            return _toSaves[GameInfo.Instance.GameName].entries.Find(e => e.title == title);
         }
 
         public bool IsEntryRegister(string title)
         {
-            return _toSaves[GameInfo.Instance.GameName].Find(e => e.title == title) != null;
+            return _toSaves[GameInfo.Instance.GameName].entries.Find(e => e.title == title) != null;
         }
     }
 }

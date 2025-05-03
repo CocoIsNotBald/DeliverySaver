@@ -37,7 +37,7 @@ namespace DeliverySaver
             gameObject.transform.SetParent(_container, false);
             gameObject.transform.localPosition = new Vector3(393, -32, 0);
 
-            _templates = gameObject.transform.Find("Mask/Content/Scroll/View/Templates");
+            _templates = gameObject.transform.Find("Mask/Content/Entries/Scroll/View/Templates");
             _vls = _templates.GetComponent<VerticalLayoutGroup>();
 
             Action callback = () => { OnExportTemplate(); };
@@ -120,9 +120,9 @@ namespace DeliverySaver
             _entries.Add(new Entry(data, templateContent.transform));
         }
 
-        internal void RemoveEntry(Entry entry)
+        internal void RemoveEntry(ImmutableEntry entry)
         {
-            _entries.Remove(entry);
+            _entries.Remove((Entry)entry);
         }
 
         public void RebuildLayout()

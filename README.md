@@ -7,7 +7,7 @@ A mod that save delivery order as a template to be reusable
 - Template or entry can be easily shared via seed
 - Template ingredient can easily be changed via multiplier
 - Tell the price of the delivery order with fee and multiplier dinamically
-- Tell if your order is too large dinamically
+- Tell if your order is too large dynamically
 - Work in multiplayer
 - Template are saved in a json format and per save file to avoid overwhelming the user with too many templates
 
@@ -42,10 +42,10 @@ You can contact me on discord: `@coco_not_bald`
 ### 1.1.0
 - [x] Add a prompt when multiple entry are the same
 - [x] Add a prompt when two entry are the same
+- [ ] Add a way to compare entry/entries
 
 ## TODO
 
 ### 1.1.0
 - Better error handling when exception occurs on "OnSeedEnter" function
 - Rework the way template are save when exception occurs
-- Add a way to compare entry

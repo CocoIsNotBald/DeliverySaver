@@ -1,22 +1,25 @@
 # DeliverySaver Changelog
 
 All the changes, fixes and improvements made to the mod.
+
 ## DeliverySaver 1.1.0
-### Added
-- Prompt when multiple entries match with multiple already registered entry. When multiple entries. A prompt appear with these actions
-	- Cancel
-	- Cancel all
-	- Overwrite
-	- Overwrite all
-- Prompt when a entry match with a already registered entry. When two entry match. A prompt appear with these actions
-	- Cancel
-	- Overwrite
+### Added/Change
+- Added prompt when one or multiple entries match
+- Change multiply input to only accept decimal number
+- Change how entry are handle. There is now two type of entry:
+	- `Entry` which is a entry where user can interact with (eg: close, multiply, export)
+	- `ImmutableEntry` which is a entry that is not interactable. Immutable entry are used when comparing entries
 ### Fixed
+- Fixed issues with template unable to scroll between entries gap by adding a transparent image element
+- Better error handling for multiplier value
+- Better error handling for seeding value
 - Prevent saving template if there is a bug report (exception) in the console
-- Reloading game now reset the error mod state. Which mean that if there is a bug report in the console, you do not need to restart the game to get rid of it
+- Reloading save now reset the error mod state. Which mean that if there is a bug report in the console, you don't need to restart the game to recover from the error state
+
 ## DeliverySaver 1.0.3
 ### Fixed
 - Fixed applying template behaviour
+
 ## DeliverySaver 1.0.2
 ### Added/Change
 - Template are saved when you save the game ([Commit](https://github.com/CocoIsNotBald/DeliverySaver/commit/c9491add740423a478078be66083ab67069c65ab))

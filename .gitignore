@@ -11,6 +11,10 @@
 *.sln.docstates
 assets
 release
+dist
+tmbs.exe
+thunderstore.toml
+icon.png
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
