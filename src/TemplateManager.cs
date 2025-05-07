@@ -269,6 +269,11 @@ namespace DeliverySaver
                     {
                         AddEntryData(entry);
                     }
+
+                    if(_toSaves[GameInfo.Instance.GameName].state == SaveState.PreventSave)
+                    {
+                        _toSaves[GameInfo.Instance.GameName].state = SaveState.Save;
+                    }
                 }
                 catch (Exception e)
                 {

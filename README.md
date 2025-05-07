@@ -37,15 +37,9 @@ You can contact me on discord: `@coco_not_bald`
 
 ## Roadmap
 
-### 1.2.0 (Can change)
-- [ ] Add a way to favorize some entries
+### 1.2.0 (can change)
+- [] Display corresponding templates when menu of physical shop is open
 ### 1.1.0
 - [x] Add a prompt when multiple entry are the same
 - [x] Add a prompt when two entry are the same
-- [ ] Add a way to compare entry/entries
-
-## TODO
-
-### 1.1.0
-- Better error handling when exception occurs on "OnSeedEnter" function
-- Rework the way template are save when exception occurs
+- [x] Add a way to compare entry/entries

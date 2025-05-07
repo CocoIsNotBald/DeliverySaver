@@ -501,13 +501,4 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Schedule I\Mods&quot;"></Exec>
   </Target>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="$(SolutionDir)tmbs.exe --csprojPath &quot;$(ProjectPath)&quot;"></Exec>
-  </Target>
-  <Target Name="CreateDistDir" AfterTargets="PostBuildEvent">
-    <Exec Command="IF NOT EXIST &quot;$(SolutionDir)dist&quot; MKDIR &quot;$(SolutionDir)dist&quot;"></Exec>
-  </Target>
-  <Target Name="CopyToDist" AfterTargets="CreateDistDir">
-    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(SolutionDir)dist&quot;"></Exec>
-  </Target>
 </Project>
